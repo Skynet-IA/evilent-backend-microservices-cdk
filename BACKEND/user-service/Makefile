@@ -176,8 +176,10 @@ prepare-lambda: build ## Preparar deployment package de Lambda desde dist/
 	@rm -rf lambda-deploy/*
 	@echo "$(YELLOW)   └─ Copiando dist/ → lambda-deploy/...$(NC)"
 	@cp -r dist/* lambda-deploy/
-	@echo "$(YELLOW)   └─ Copiando entry point index.js...$(NC)"
-	@cp index.js lambda-deploy/
+	@if [ -f index.js ]; then \
+		echo "$(YELLOW)   └─ Copiando entry point index.js...$(NC)"; \
+		cp index.js lambda-deploy/; \
+	fi
 	@echo "$(YELLOW)   └─ Copiando package.json...$(NC)"
 	@cp package.json lambda-deploy/
 	@echo "$(YELLOW)   └─ Instalando dependencias de producción...$(NC)"
