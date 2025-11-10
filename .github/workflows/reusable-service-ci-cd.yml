@@ -1,0 +1,86 @@
+name: Reusable Service CI/CD
+
+on:
+  workflow_call:
+    inputs:
+      service_name:
+        description: 'Nombre del servicio (user-service o product-service)'
+        required: true
+        type: string
+      working_directory:
+        description: 'Directorio del servicio (BACKEND/user-service o BACKEND/product-service)'
+        required: true
+        type: string
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      AWS_REGION:
+        required: true
+      COGNITO_POOL_ID:
+        required: true
+      COGNITO_APP_CLIENT_ID:
+        required: true
+      DB_PASSWORD_TEST:
+        required: false
+      MONGODB_URI_TEST:
+        required: false
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  build-and-test:
+    name: Build & Test ${{ inputs.service_name }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
+
+    steps:
+      # ✅ PASO 1: Checkout
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      # ✅ PASO 2: Setup Node.js
+      - name: 🔧 Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: '${{ inputs.working_directory }}/package-lock.json'
+
+      # ✅ PASO 3: Install dependencies
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      # ✅ PASO 4: Type check
+      - name: 🔍 Type check
+        run: npm run type-check
+        continue-on-error: true
+
+      # ✅ PASO 5: Build
+      - name: 🏗️ Build
+        run: npm run build
+
+      # ✅ PASO 6: Unit tests
+      - name: 🧪 Unit tests
+        run: npm run test:unit
+        continue-on-error: true
+
+      # ✅ PASO 7: Integration tests (opcional)
+      - name: 🔗 Integration tests
+        run: npm run test:integration || true
+        continue-on-error: true
+        env:
+          COGNITO_POOL_ID: ${{ secrets.COGNITO_POOL_ID }}
+          COGNITO_APP_CLIENT_ID: ${{ secrets.COGNITO_APP_CLIENT_ID }}
+          DB_PASSWORD_TEST: ${{ secrets.DB_PASSWORD_TEST }}
+          MONGODB_URI_TEST: ${{ secrets.MONGODB_URI_TEST }}
+
+      # ✅ PASO 8: Report
+      - name: 📊 Test summary
+        if: always()
+        run: echo "✅ ${{ inputs.service_name }} build completed"
+

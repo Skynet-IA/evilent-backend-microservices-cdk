@@ -1,0 +1,54 @@
+{
+  "name": "product-service",
+  "version": "0.1.0",
+  "bin": {
+    "product-service": "bin/product-service.js"
+  },
+  "config": {
+    "serviceName": "product-service",
+    "serviceDisplayName": "Product Service"
+  },
+  "scripts": {
+    "build": "tsc && npx tsc lib/product-service-stack.ts --outDir dist/lib --module commonjs --target es2020 --skipLibCheck --esModuleInterop && make prepare-lambda",
+    "lint": "echo 'No linting configured yet'",
+    "type-check": "tsc --noEmit",
+    "watch": "tsc -w",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:unit": "jest --testPathPattern=unit",
+    "test:integration": "jest --testPathPattern=integration",
+    "test:debug": "jest --runInBand",
+    "cdk": "npx cdk",
+    "cdk:deploy": "npx cdk deploy",
+    "cdk:destroy": "npx cdk destroy",
+    "cdk:synth": "npx cdk synth",
+    "cdk:diff": "npx cdk diff"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.156",
+    "@types/jest": "^29.5.14",
+    "@types/node": "22.7.9",
+    "@types/uuid": "^10.0.0",
+    "aws-cdk": "2.1030.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.4.5",
+    "ts-node": "^10.9.2",
+    "typescript": "~5.6.3"
+  },
+  "dependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.921.0",
+    "@aws-sdk/client-s3": "^3.921.0",
+    "@aws-sdk/client-secrets-manager": "^3.921.0",
+    "@aws-sdk/s3-request-presigner": "^3.921.0",
+    "@middy/core": "^6.4.5",
+    "@middy/http-json-body-parser": "^6.4.5",
+    "axios": "^1.13.0",
+    "aws-cdk-lib": "2.215.0",
+    "aws-jwt-verify": "^5.1.1",
+    "constructs": "^10.0.0",
+    "mongoose": "^8.19.2",
+    "uuid": "^13.0.0",
+    "zod": "^3.25.76"
+  }
+}

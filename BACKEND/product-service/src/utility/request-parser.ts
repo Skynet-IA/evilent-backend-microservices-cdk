@@ -1,0 +1,252 @@
+/**
+ * 🔍 Request Parser - Validación centralizada de inputs
+ * 
+ * ✅ REGLA #5: SIEMPRE validar datos de entrada con schemas (Zod)
+ * ✅ REGLA PLATINO: Validar TODOS los inputs antes de procesarlos
+ * ✅ REGLA #9: Mantener consistencia arquitectónica
+ * 
+ * Este archivo centraliza la validación de inputs para TODOS los endpoints.
+ * Patrón copiado de user-service para garantizar 100% consistencia.
+ * 
+ * Uso obligatorio:
+ * ```typescript
+ * const { data, error } = parseAndValidateBody(event, CreateProductSchema);
+ * if (error) return validationErrorResponse(error);
+ * // 'data' está garantizado como válido y type-safe
+ * ```
+ */
+
+import { z } from 'zod';
+import type { APIGatewayEvent, APIGatewayProxyResult } from 'aws-lambda';
+import { createLogger } from './logger.js';
+
+const logger = createLogger('RequestParser');
+
+/**
+ * Interfaz para errores de validación
+ */
+export interface ValidationError {
+  statusCode: number;
+  message: string;
+  details: Array<{
+    field: string;
+    message: string;
+    code: string;
+  }>;
+}
+
+/**
+ * Interfaz para resultado de parseo y validación
+ */
+export interface ParseResult<T> {
+  data: T | null;
+  error: ValidationError | null;
+}
+
+/**
+ * Parsea y valida el body de un evento API Gateway
+ * 
+ * ✅ REGLA #5: Validar TODOS los inputs con Zod
+ * ✅ REGLA PLATINO: Defense in Depth
+ * 
+ * @param event - Evento de API Gateway
+ * @param schema - Schema de Zod para validación
+ * @returns { data, error } - Datos validados o error
+ * 
+ * @example
+ * ```typescript
+ * const { data, error } = parseAndValidateBody(event, CreateProductSchema);
+ * if (error) return validationErrorResponse(error);
+ * 
+ * const { name, description, price } = data; // Type-safe
+ * ```
+ */
+export function parseAndValidateBody<T>(
+  event: APIGatewayEvent,
+  schema: z.ZodSchema<T>
+): ParseResult<T> {
+  try {
+    // 1. Parsear body JSON
+    const body = JSON.parse(event.body || '{}');
+
+    // 2. Validar contra schema Zod
+    const result = schema.parse(body);
+
+    // 3. Log de éxito
+    logger.info('✅ Validación exitosa', {
+      schema: schema.constructor.name,
+      requestId: event.requestContext?.requestId,
+    });
+
+    return { data: result, error: null };
+  } catch (err) {
+    // 4. Manejo de errores Zod
+    if (err instanceof z.ZodError) {
+      const formattedErrors = err.errors.map((e) => ({
+        field: e.path.join('.') || 'root',
+        message: e.message,
+        code: e.code,
+      }));
+      
+      logger.warn('❌ Validación fallida', {
+        schema: schema.constructor.name,
+        errors: formattedErrors,
+        requestId: event.requestContext?.requestId,
+      });
+      
+      return {
+        data: null,
+        error: {
+          statusCode: 400,
+          message: 'Datos de entrada inválidos',
+          details: formattedErrors,
+        },
+      };
+    }
+
+    // 5. Otros errores (ej: JSON inválido)
+    logger.error('❌ Error en validación (no Zod)', {
+      error: err instanceof Error ? err.message : String(err),
+      requestId: event.requestContext?.requestId,
+    });
+
+    return {
+      data: null,
+      error: {
+        statusCode: 400,
+        message: 'JSON inválido o error de parsing',
+        details: [
+          {
+            field: 'body',
+            message: err instanceof Error ? err.message : 'Error desconocido',
+            code: 'invalid_json',
+          },
+        ],
+      },
+    };
+  }
+}
+
+/**
+ * Helper para respuesta de validación exitosa
+ * Centraliza formato de respuesta
+ * 
+ * @param data - Datos a retornar
+ * @param statusCode - Status HTTP (default 200)
+ * @returns APIGatewayProxyResult formateada
+ */
+export function validationSuccessResponse<T>(
+  data: T,
+  statusCode = 200
+): APIGatewayProxyResult {
+  return {
+    statusCode,
+    body: JSON.stringify({
+      success: true,
+      data,
+    }),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  };
+}
+
+/**
+ * Helper para respuesta de error de validación
+ * Centraliza formato de respuesta de error
+ * 
+ * @param error - ValidationError con detalles
+ * @returns APIGatewayProxyResult con error
+ * 
+ * @example
+ * ```typescript
+ * const { error } = parseAndValidateBody(event, schema);
+ * if (error) return validationErrorResponse(error);
+ * ```
+ */
+export function validationErrorResponse(
+  error: ValidationError
+): APIGatewayProxyResult {
+  return {
+    statusCode: error.statusCode,
+    body: JSON.stringify({
+      success: false,
+      error: {
+        message: error.message,
+        details: error.details,
+      },
+    }),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  };
+}
+
+/**
+ * Parsea y valida los path parameters de un evento API Gateway
+ */
+export function parseAndValidatePathParams<T>(
+  event: APIGatewayEvent,
+  schema: z.ZodSchema<T>
+): ParseResult<T> {
+  try {
+    const pathParams = event.pathParameters || {};
+    const result = schema.parse(pathParams);
+
+    return { data: result, error: null };
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      const formattedErrors = err.errors.map((e) => ({
+        field: e.path.join('.') || 'root',
+        message: e.message,
+        code: e.code,
+      }));
+    
+    return {
+      data: null,
+        error: {
+          statusCode: 400,
+          message: 'Path parameters inválidos',
+          details: formattedErrors,
+        },
+    };
+  }
+
+    throw err;
+  }
+}
+
+/**
+ * Parsea y valida los query parameters de un evento API Gateway
+ */
+export function parseAndValidateQueryParams<T>(
+  event: APIGatewayEvent,
+  schema: z.ZodSchema<T>
+): ParseResult<T> {
+  try {
+  const queryParams = event.queryStringParameters || {};
+    const result = schema.parse(queryParams);
+  
+    return { data: result, error: null };
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      const formattedErrors = err.errors.map((e) => ({
+        field: e.path.join('.') || 'root',
+        message: e.message,
+        code: e.code,
+      }));
+    
+    return {
+      data: null,
+        error: {
+          statusCode: 400,
+          message: 'Query parameters inválidos',
+          details: formattedErrors,
+        },
+    };
+  }
+
+    throw err;
+}
+}
+

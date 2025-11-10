@@ -1,0 +1,18 @@
+{
+    "dev": {
+        "driver": "pg",
+        "host": "localhost",
+        "port": 5432,
+        "user": "postgres",
+        "password": "postgres",
+        "database": "evilent_users_dev"
+    },
+    "production": {
+        "driver": "pg",
+        "host": {"ENV": "DB_ENDPOINT"},
+        "port": 5432,
+        "user": {"ENV": "DB_USER"},
+        "password": {"ENV": "DB_PASSWORD"},
+        "database": {"ENV": "DB_NAME"}
+    }
+}

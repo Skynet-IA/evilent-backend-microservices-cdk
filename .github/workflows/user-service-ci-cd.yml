@@ -1,0 +1,35 @@
+name: User Service CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'BACKEND/user-service/**'
+      - 'BACKEND/iam-policies/**'
+      - '.github/workflows/user-service-ci-cd.yml'
+
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'BACKEND/user-service/**'
+
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20'
+  AWS_REGION: 'eu-central-1'
+
+jobs:
+  ci-cd:
+    uses: ./.github/workflows/reusable-service-ci-cd.yml@main
+    with:
+      service_name: user-service
+      working_directory: BACKEND/user-service
+    secrets:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      COGNITO_POOL_ID: ${{ secrets.COGNITO_POOL_ID }}
+      COGNITO_APP_CLIENT_ID: ${{ secrets.COGNITO_APP_CLIENT_ID }}
+      DB_PASSWORD_TEST: ${{ secrets.DB_PASSWORD_TEST }}
+
