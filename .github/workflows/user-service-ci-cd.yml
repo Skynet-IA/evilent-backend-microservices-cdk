@@ -21,7 +21,7 @@ env:
 
 jobs:
   ci-cd:
-    uses: ./.github/workflows/reusable-service-ci-cd.yml@main
+    uses: ./.github/workflows/reusable-service-ci-cd.yml
     with:
       service_name: user-service
       working_directory: BACKEND/user-service
