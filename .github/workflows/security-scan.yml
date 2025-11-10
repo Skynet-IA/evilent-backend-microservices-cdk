@@ -105,7 +105,7 @@ jobs:
       # ✅ PASO 12: Upload Dependency Check results
       - name: 📤 Upload OWASP results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: dependency-check-report
           path: dependency-check-report.json
