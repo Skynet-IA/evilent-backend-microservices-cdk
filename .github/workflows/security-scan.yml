@@ -23,12 +23,13 @@ jobs:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      # ✅ PASO 2: Setup Node.js
-      - name: 🔧 Setup Node.js ${{ env.NODE_VERSION }}
+      # ✅ PASO 2: Setup Node.js (user-service)
+      - name: 🔧 Setup Node.js ${{ env.NODE_VERSION }} - user-service
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
+          cache-dependency-path: 'BACKEND/user-service/package-lock.json'
 
       # ✅ PASO 3: Install dependencies (user-service)
       - name: 📦 Install user-service dependencies
@@ -50,6 +51,14 @@ jobs:
         continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN || 'disabled' }}
+
+      # ✅ PASO 5b: Setup Node.js (product-service)
+      - name: 🔧 Setup Node.js ${{ env.NODE_VERSION }} - product-service
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'BACKEND/product-service/package-lock.json'
 
       # ✅ PASO 6: Install dependencies (product-service)
       - name: 📦 Install product-service dependencies
