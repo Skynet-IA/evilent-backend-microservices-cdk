@@ -866,7 +866,7 @@ describe('Penetration Tests', () => {
 - [x] npm audit sin vulnerabilidades críticas ✅ SCRIPT AGREGADO
 - [x] Snyk scan pasando ✅ SCRIPT AGREGADO
 - [x] Secrets detection sin alertas ✅ GITLEAKS + TRUFFLEHOG
-- [ ] IAM policies siguiendo least privilege (⏳ Verificar en AWS)
+- [x] IAM policies siguiendo least privilege ✅ VERIFICADO - ARNs específicos, sin wildcards
 - [x] Penetration testing completado ✅ TESTS CREADOS
 - [x] OWASP Top 10 validado ✅ DEPENDENCY-CHECK AGREGADO
 - [x] Input validation robusta ✅ TESTS DE VALIDACIÓN
