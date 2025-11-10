@@ -7,6 +7,7 @@ on:
       - 'BACKEND/product-service/**'
       - 'BACKEND/iam-policies/**'
       - '.github/workflows/product-service-ci-cd.yml'
+      - '.github/workflows/reusable-service-ci-cd.yml'
 
   pull_request:
     branches: [main, develop]
