@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "build": "tsc && make prepare-lambda",
+    "build": "tsc",
     "lint": "echo 'No linting configured yet'",
     "type-check": "tsc --noEmit",
     "test": "jest",
