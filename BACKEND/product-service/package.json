@@ -18,6 +18,7 @@
     "test:coverage": "jest --coverage",
     "test:unit": "jest --testPathPattern=unit",
     "test:integration": "jest --testPathPattern=integration",
+    "test:smoke": "jest --testPathPattern=smoke",
     "test:debug": "jest --runInBand",
     "cdk": "npx cdk",
     "cdk:deploy": "npx cdk deploy",

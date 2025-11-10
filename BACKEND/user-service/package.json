@@ -6,6 +6,7 @@
     "test": "jest",
     "test:unit": "jest --testPathPattern=unit",
     "test:integration": "jest --testPathPattern=integration",
+    "test:smoke": "jest --testPathPattern=smoke",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:debug": "jest --runInBand",
