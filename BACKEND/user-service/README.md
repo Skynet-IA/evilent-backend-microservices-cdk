@@ -235,3 +235,4 @@ Requieren header: `Authorization: Bearer TOKEN`
 ---
 
 **Lee [GUIA_DEPLOY_AWS.md](./GUIA_DEPLOY_AWS.md) para más detalles** 📚
+// Trigger: Force user-service workflow - Testing FASE 4
