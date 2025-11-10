@@ -88,6 +88,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE || '' }}
+        with:
+          config-path: .gitleaksignore
 
       # ✅ PASO 10: TruffleHog - Secrets verification
       - name: 🔐 TruffleHog scan - Secrets verification

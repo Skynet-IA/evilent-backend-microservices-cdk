@@ -54,7 +54,18 @@ npm run scan:secrets
 # Revisar logs de seguridad
 aws logs tail /aws/lambda/UserServiceStack --follow
 aws logs tail /aws/lambda/ProductServiceStack --follow
+
+# GitLeaks automático en cada push (GitHub Actions)
+# ✅ Ejecuta: gitleaks scan + .gitleaksignore
+# ✅ Diferencia: Tokens ficticios vs secrets reales
+# ✅ Documentación: Ver GITLEAKS_STRATEGY.md
 ```
+
+### Manejo de False Positives
+- 📄 Archivo de configuración: `.gitleaksignore`
+- 📋 Documentación detallada: `GITLEAKS_STRATEGY.md`
+- ✅ Todos los false positives documentados y justificados
+- ✅ REGLA #2 cumplida: No hay secrets reales en código
 
 ---
 
