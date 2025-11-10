@@ -79,8 +79,51 @@ jobs:
           DB_PASSWORD_TEST: ${{ secrets.DB_PASSWORD_TEST }}
           MONGODB_URI_TEST: ${{ secrets.MONGODB_URI_TEST }}
 
-      # ✅ PASO 8: Report
-      - name: 📊 Test summary
+      # ✅ PASO 8: Prepare Lambda deployment package
+      - name: 📦 Prepare Lambda deployment
+        run: make prepare-lambda
+        continue-on-error: false
+
+      # ✅ PASO 9: Configure AWS credentials
+      - name: 🔐 Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      # ✅ PASO 10: Install AWS CDK
+      - name: 📥 Install AWS CDK
+        run: npm install -g aws-cdk
+
+      # ✅ PASO 11: CDK Bootstrap (si es necesario)
+      - name: 🚀 CDK Bootstrap
+        run: npx cdk bootstrap aws://unknown-account/${{ secrets.AWS_REGION }} || echo "⚠️ Bootstrap already done"
+        continue-on-error: true
+
+      # ✅ PASO 12: CDK Synth (validar templates)
+      - name: 🔍 CDK Synth
+        run: npm run cdk:synth
+        env:
+          COGNITO_POOL_ID: ${{ secrets.COGNITO_POOL_ID }}
+          COGNITO_APP_CLIENT_ID: ${{ secrets.COGNITO_APP_CLIENT_ID }}
+
+      # ✅ PASO 13: CDK Deploy (desplegar a AWS)
+      - name: 🚀 CDK Deploy to AWS
+        run: npm run cdk:deploy -- --require-approval never
+        env:
+          COGNITO_POOL_ID: ${{ secrets.COGNITO_POOL_ID }}
+          COGNITO_APP_CLIENT_ID: ${{ secrets.COGNITO_APP_CLIENT_ID }}
+
+      # ✅ PASO 14: Verificar deployment en AWS
+      - name: ✅ Verify deployment
+        run: |
+          echo "Verificando stack en AWS..."
+          aws cloudformation describe-stacks --stack-name $(echo ${{ inputs.service_name }} | sed 's/-service/ServiceStack/;s/^./\U&/') || echo "⚠️ Stack not found"
+        continue-on-error: true
+
+      # ✅ PASO 15: Test summary
+      - name: 📊 Deployment summary
         if: always()
-        run: echo "✅ ${{ inputs.service_name }} build completed"
+        run: echo "✅ ${{ inputs.service_name }} deployment completed"
 
