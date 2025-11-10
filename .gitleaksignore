@@ -1,0 +1,48 @@
+# .gitleaksignore
+# Exceptions para tokens de prueba (non-sensitive)
+# Referencia: https://github.com/gitleaks/gitleaks/wiki/.gitleaksignore
+
+# ✅ JUSTIFICACIÓN: Estos son tokens FICTICIOS/EJEMPLOS de documentación
+# - NO son secrets reales
+# - Son ejemplos públicos para documentación de API
+# - Se usan solo para testing en localhost
+# - REGLA #2 aplica a secrets REALES (API keys, passwords, etc)
+
+# Penetration tests - JWT de prueba estándar
+# Este JWT es un ejemplo público ampliamente conocido: {"sub":"1234567890","name":"John Doe","iat":1516239022,"exp":0}
+BACKEND/user-service/test/security/penetration.test.ts:221
+
+# API Examples - Tokens ficticios de documentación
+# Estos son ejemplos en la documentación, no secrets reales
+BACKEND/product-service/examples/API_ENDPOINTS_EXAMPLES.md:93
+BACKEND/product-service/examples/API_ENDPOINTS_EXAMPLES.md:111
+BACKEND/product-service/examples/API_ENDPOINTS_EXAMPLES.md:166
+BACKEND/product-service/examples/API_ENDPOINTS_EXAMPLES.md:175
+BACKEND/product-service/examples/API_ENDPOINTS_EXAMPLES.md:181
+BACKEND/product-service/examples/API_ENDPOINTS_EXAMPLES.md:187
+BACKEND/product-service/examples/API_ENDPOINTS_EXAMPLES.md:233
+BACKEND/product-service/examples/API_ENDPOINTS_EXAMPLES.md:296
+BACKEND/product-service/examples/API_ENDPOINTS_EXAMPLES.md:361
+BACKEND/product-service/examples/API_ENDPOINTS_EXAMPLES.md:410
+BACKEND/product-service/examples/API_ENDPOINTS_EXAMPLES.md:482
+BACKEND/product-service/examples/API_ENDPOINTS_EXAMPLES.md:491
+BACKEND/product-service/examples/API_ENDPOINTS_EXAMPLES.md:497
+BACKEND/product-service/examples/API_ENDPOINTS_EXAMPLES.md:563
+BACKEND/product-service/examples/API_ENDPOINTS_EXAMPLES.md:650
+BACKEND/product-service/examples/API_ENDPOINTS_EXAMPLES.md:722
+BACKEND/product-service/examples/API_ENDPOINTS_EXAMPLES.md:918
+
+# E2E Tests - Tokens ficticios de prueba
+BACKEND/user-service/test/e2e/error-scenarios.e2e.test.ts:162
+
+# Podfile.lock - Dependencias de iOS (no son secrets)
+# Estos son archivos generados automáticamente, no contienen secrets reales
+FRONTEND/evilent_app/ios/Podfile.lock:55
+FRONTEND/evilent_app/macos/Podfile.lock:55
+
+# .cursorrules - Tokens ficticios en documentación de reglas
+.cursorrules:23
+
+# GITLEAKS_STRATEGY.md - Documentación sobre estrategia de seguridad
+BACKEND/GITLEAKS_STRATEGY.md:48
+

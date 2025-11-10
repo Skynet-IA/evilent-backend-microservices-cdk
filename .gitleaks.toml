@@ -1,0 +1,46 @@
+title = "gitleaks config"
+
+# Extend default gitleaks config
+# Reference: https://github.com/gitleaks/gitleaks#configuration
+
+[allowlist]
+description = "Global allowlist for false positives"
+paths = [
+    '''BACKEND/user-service/test/security/penetration.test.ts''',
+    '''BACKEND/product-service/examples/API_ENDPOINTS_EXAMPLES.md''',
+    '''BACKEND/user-service/test/e2e/error-scenarios.e2e.test.ts''',
+    '''FRONTEND/evilent_app/ios/Podfile.lock''',
+    '''FRONTEND/evilent_app/macos/Podfile.lock''',
+    '''.cursorrules''',
+    '''BACKEND/GITLEAKS_STRATEGY.md''',
+    '''BACKEND/SECURITY.md'''
+]
+
+# Specific rules to ignore
+[[rules]]
+id = "jwt"
+description = "Ignore JWT tokens in test files and documentation"
+[allowlist]
+paths = [
+    '''BACKEND/user-service/test/security/penetration.test.ts''',
+    '''BACKEND/product-service/examples/API_ENDPOINTS_EXAMPLES.md'''
+]
+
+[[rules]]
+id = "generic-api-key"
+description = "Ignore API keys in documentation and auto-generated files"
+[allowlist]
+paths = [
+    '''FRONTEND/evilent_app/ios/Podfile.lock''',
+    '''FRONTEND/evilent_app/macos/Podfile.lock''',
+    '''.cursorrules''',
+    '''BACKEND/GITLEAKS_STRATEGY.md'''
+]
+
+[[rules]]
+id = "curl-auth-header"
+description = "Ignore curl auth headers in API documentation examples"
+[allowlist]
+paths = [
+    '''BACKEND/product-service/examples/API_ENDPOINTS_EXAMPLES.md'''
+]
