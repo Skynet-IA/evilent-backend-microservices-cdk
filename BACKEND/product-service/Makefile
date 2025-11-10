@@ -184,6 +184,20 @@ build: ## Compilar TypeScript a JavaScript
 	npm run build
 	@echo "$(GREEN)✅ Compilación exitosa$(NC)"
 
+prepare-lambda: build ## Preparar deployment package de Lambda desde dist/
+	@echo "$(GREEN)📦 Preparando deployment package de Lambda...$(NC)"
+	@echo "$(YELLOW)   └─ Creando directorio lambda-deploy/...$(NC)"
+	@mkdir -p lambda-deploy
+	@echo "$(YELLOW)   └─ Limpiando lambda-deploy/...$(NC)"
+	@rm -rf lambda-deploy/*
+	@echo "$(YELLOW)   └─ Copiando dist/ → lambda-deploy/...$(NC)"
+	@cp -r dist/* lambda-deploy/
+	@echo "$(YELLOW)   └─ Copiando package.json...$(NC)"
+	@cp package.json lambda-deploy/
+	@echo "$(YELLOW)   └─ Instalando dependencias de producción...$(NC)"
+	@cd lambda-deploy && npm install --production --silent
+	@echo "$(GREEN)✅ Deployment package listo en lambda-deploy/$(NC)"
+
 update: build ## Actualizar servicio después de cambios (build + deploy rápido)
 	@echo "$(GREEN)🔄 Actualizando servicio...$(NC)"
 	@if [ -z "$(COGNITO_POOL_ID)" ]; then \

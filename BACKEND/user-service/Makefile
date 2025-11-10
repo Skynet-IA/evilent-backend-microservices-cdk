@@ -170,6 +170,8 @@ build: ## Compilar TypeScript (se ejecuta automáticamente en deploy/update)
 
 prepare-lambda: build ## Preparar deployment package de Lambda desde dist/
 	@echo "$(GREEN)📦 Preparando deployment package de Lambda...$(NC)"
+	@echo "$(YELLOW)   └─ Creando directorio lambda-deploy/...$(NC)"
+	@mkdir -p lambda-deploy
 	@echo "$(YELLOW)   └─ Limpiando lambda-deploy/...$(NC)"
 	@rm -rf lambda-deploy/*
 	@echo "$(YELLOW)   └─ Copiando dist/ → lambda-deploy/...$(NC)"
