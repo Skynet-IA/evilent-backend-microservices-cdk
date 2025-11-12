@@ -1,0 +1,82 @@
+# 🔒 EVILENT - .gitignore
+# Desarrollado siguiendo las reglas de seguridad y limpieza
+
+# ==================== CARPETAS A IGNORAR ====================
+# FRONTEND - Mantener localmente, no en git
+FRONTEND/
+
+# Node modules
+node_modules/
+packages/node_modules/
+
+# Configuración local del IDE (excepto settings.json compartido)
+.vscode/*
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# ==================== COMPILACIÓN Y BUILD ====================
+dist/
+build/
+*.tsbuildinfo
+
+# ==================== LOGS ====================
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# ==================== VARIABLES DE ENTORNO ====================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ==================== RUNTIME ====================
+.next/
+.nuxt/
+out/
+
+# ==================== TESTING ====================
+coverage/
+.nyc_output/
+*.lcov
+
+# ==================== MISCELLANEOUS ====================
+.cache/
+.parcel-cache
+.pnp
+.pnp.js
+*.tgz
+
+# ==================== AWS CDK ====================
+cdk.out/
+*.d.ts
+*.js
+!jest.config.cjs
+!lib/
+!bin/
+!test/
+
+# ==================== SENSIBLES (NUNCA AGREGAR) ====================
+# AWS Credentials
+credentials
+.aws/
+# SSH Keys
+*.pem
+*.key
+# Database credentials
+database.json
+# Secrets
+.gitleaks.toml
+.gitleaksignore
+
+
