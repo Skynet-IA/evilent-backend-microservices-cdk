@@ -21,19 +21,18 @@ Crear una **cobertura de testing del 80%+** en el frontend Flutter siguiendo las
 
 ### Estado Actual
 ```
-✅ 40 Tests existentes:
-   - Validation: 22 tests
-   - AuthService: 11 tests
-   - AuthProvider: 7 tests
+🚀 EMPEZAMOS DE CERO:
+   ✅ Carpeta test/ existe (VACÍA)
+   ✅ Tests viejos eliminados (40 tests removidos)
+   ❌ Cero tests implementados
+   ❌ Cero fixtures creadas
+   ❌ Cero helpers creados
+   ❌ Cero mocks generados
 
-❌ FALTA:
-   - Boot system tests (25+ tests)
-   - Error handling tests (15+ tests)
-   - Providers tests (30+ tests)
-   - Screens/widgets tests (50+ tests)
-   - Integration tests (20+ tests)
-   
-💎 Meta: 200+ tests, 80%+ cobertura
+🎯 Meta: 280 tests, 80%+ cobertura
+   - Unit tests: 140 (Services 60 + Providers 50 + Utils/Errors 30)
+   - Widget tests: 120 (Screens + Components)
+   - Integration tests: 20 (Flujos completos)
 ```
 
 ---
@@ -84,9 +83,9 @@ test/
 │   └── repositories/
 │       └── mock_repositories.dart  # Mocks de APIs
 │
-├── unit/                           # Tests unitarios
+├── unit/                           # Tests unitarios (POR CREAR)
 │   ├── services/
-│   │   ├── auth_service_test.dart (11 tests, ✅ EXISTE)
+│   │   ├── auth_service_test.dart (11 tests)
 │   │   ├── boot_service_test.dart (15 tests)
 │   │   ├── connectivity_service_test.dart (8 tests)
 │   │   ├── secure_storage_service_test.dart (10 tests)
@@ -94,14 +93,15 @@ test/
 │   │   └── user_profile_service_test.dart (12 tests)
 │   │
 │   ├── providers/
-│   │   ├── auth_provider_test.dart (7 tests, ✅ EXISTE)
 │   │   ├── boot_provider_test.dart (20 tests)
+│   │   ├── boot_notifier_test.dart (15 tests)
+│   │   ├── auth_provider_test.dart (12 tests)
 │   │   ├── app_data_provider_test.dart (15 tests)
 │   │   ├── cart_provider_test.dart (10 tests)
 │   │   └── theme_provider_test.dart (5 tests)
 │   │
 │   ├── utils/
-│   │   ├── validation_test.dart (22 tests, ✅ EXISTE)
+│   │   ├── validation_test.dart (22 tests)
 │   │   ├── app_theme_test.dart (8 tests)
 │   │   └── navigation_test.dart (5 tests)
 │   │
@@ -149,118 +149,77 @@ test/
 
 ### FASE 0: PREPARACIÓN (2 horas)
 
-#### TAREA 0.1: Limpiar Tests Existentes
-**Archivos a ELIMINAR:**
-```bash
-rm test/unit/services/auth_service_test.dart
-rm test/unit/providers/auth_provider_test.dart
-rm test/unit/utils/validation_test.dart
+#### ✅ TAREA 0.1: Tests Viejos YA ELIMINADOS
+**Estado:** ✅ COMPLETADO
+```
+✅ Eliminado: test/unit/services/auth_service_test.dart
+✅ Eliminado: test/unit/providers/auth_provider_test.dart
+✅ Eliminado: test/unit/utils/validation_test.dart
+
+🚀 Partimos de CERO - solo existe carpeta test/ vacía
 ```
 
-**Razón:** Empezar desde cero con estructura nueva y consistente.
-
-**Tiempo:** 15 min
+**Tiempo:** ✅ HECHO
 
 ---
 
 #### TAREA 0.2: Agregar Dependencias de Testing
 **Archivo:** `pubspec.yaml`
 
+**Verificar que existan:**
 ```yaml
 dev_dependencies:
   flutter_test:
-    sdk: flutter
+    sdk: flutter       # ✅ YA EXISTE
   
   # Mocking
-  mockito: ^5.4.4
+  mockito: ^5.4.4     # ✅ YA EXISTE
   
-  # Testing utilities
-  fake_async: ^1.3.1            # Para tests asíncrónos
-  
-  # Coverage
-  coverage: ^1.8.0
-  
-  # Riverpod testing
-  riverpod: ^3.0.0
-  flutter_riverpod: ^3.0.0
+  # Coverage (AGREGAR SI NO EXISTE)
+  coverage: ^1.8.0    # ← VERIFICAR
 ```
 
-**Comando:**
+**Comando (si falta coverage):**
 ```bash
+flutter pub add --dev coverage
 flutter pub get
-flutter pub run build_runner build  # Generar mocks
+flutter pub run build_runner build --delete-conflicting-outputs
 ```
 
-**Tiempo:** 30 min
+**Tiempo:** 15 min
 
 ---
 
-#### TAREA 0.3: Crear Base de Fixtures (Datos Reutilizables)
-**Archivo:** `test/fixtures/auth_fixtures.dart`
+#### ✅ TAREA 0.3: Crear Base de Fixtures
+**Estado:** ✅ CREADAS
 
-```dart
-// 🎯 REGLA DRY: Un solo lugar para datos de prueba
-class AuthFixtures {
-  // Valid user
-  static const String validEmail = 'test@evilent.com';
-  static const String validPassword = 'Test@12345';
-  static const String validFirstName = 'Juan';
-  static const String validLastName = 'Pérez';
-  
-  // Invalid inputs
-  static const String invalidEmail = 'notanemail';
-  static const String shortPassword = 'pass';
-  static const String emptyEmail = '';
-  
-  // Tokens
-  static const String validToken = 'eyJhbGc...'; // JWT válido
-  static const String expiredToken = 'eyJhbGc...'; // JWT expirado
-  static const String invalidToken = 'invalid';
-  
-  // Errores
-  static final invalidCredentialsError = AppError(
-    type: AppErrorType.authentication,
-    message: 'Credenciales inválidas',
-    code: 'INVALID_CREDENTIALS',
-  );
-}
-```
+**Archivos creados:**
+- ✅ `test/fixtures/auth_fixtures.dart` (usuarios, tokens, errores)
+- ✅ `test/fixtures/app_data_fixtures.dart` (datos de app)
 
-**Archivos similares:**
-- `test/fixtures/app_data_fixtures.dart`
+**Falta crear:**
 - `test/fixtures/error_fixtures.dart`
 - `test/fixtures/product_fixtures.dart`
+- `test/fixtures/provider_fixtures.dart`
 
-**Tiempo:** 45 min
+**Tiempo:** 30 min (resto)
 
 ---
 
-#### TAREA 0.4: Crear Test App Wrapper
-**Archivo:** `test/helpers/test_app_wrapper.dart`
+#### ✅ TAREA 0.4: Crear Test App Wrapper
+**Estado:** ✅ CREADO
 
-```dart
-// 🎯 Widget que envuelve tests con todas las dependencias necesarias
-class TestAppWrapper extends StatelessWidget {
-  final Widget child;
-  
-  const TestAppWrapper({required this.child});
-  
-  @override
-  Widget build(BuildContext context) {
-    return ProviderScope(
-      child: MaterialApp(
-        theme: AppTheme.lightTheme,
-        home: Scaffold(body: child),
-      ),
-    );
-  }
-}
+**Archivos creados:**
+- ✅ `test/helpers/test_app_wrapper.dart` (MaterialApp + ProviderScope)
 
-// Helper function
-Widget wrapWithTestApp(Widget widget) => TestAppWrapper(child: widget);
-```
+**Funciones disponibles:**
+- `wrapWithTestApp(widget)` - Envolve widget simple
+- `createProviderContainer(overrides)` - Crear container con mocks
 
-**Tiempo:** 30 min
+**Falta crear:**
+- `test/helpers/test_helpers.dart` (funciones helper generales)
+
+**Tiempo:** ✅ 15 min (completado)
 
 ---
 
@@ -712,14 +671,20 @@ Escribir tests para cerrar gaps.
 
 | Fase | Tarea | Horas | Tests | Estado |
 |------|-------|-------|-------|--------|
-| **0** | Preparación | 2 | - | 🔴 Pendiente |
-| **1** | Services | 20 | 60 | 🔴 Pendiente |
-| **2** | Providers | 15 | 50 | 🔴 Pendiente |
-| **3** | Utils & Errors | 8 | 30 | 🔴 Pendiente |
-| **4** | Widgets/Screens | 25 | 120 | 🔴 Pendiente |
-| **5** | Integration | 10 | 20 | 🔴 Pendiente |
-| **6** | Coverage | 5 | - | 🔴 Pendiente |
-| **TOTAL** | | **85 horas** | **280 tests** | 📊 80%+ cobertura |
+| **0** | Preparación | 1 | - | 🟢 70% HECHO |
+| **1** | Services | 20 | 60 | 🔴 PENDIENTE |
+| **2** | Providers | 15 | 50 | 🔴 PENDIENTE |
+| **3** | Utils & Errors | 8 | 30 | 🔴 PENDIENTE |
+| **4** | Widgets/Screens | 25 | 120 | 🔴 PENDIENTE |
+| **5** | Integration | 10 | 20 | 🔴 PENDIENTE |
+| **6** | Coverage | 5 | - | 🔴 PENDIENTE |
+| **TOTAL** | | **84 horas restantes** | **280 tests** | 📊 80%+ cobertura |
+
+**FASE 0 Progreso:**
+- ✅ Tests viejos eliminados
+- ✅ Fixtures base creadas (auth, app_data)
+- ✅ Test App Wrapper creado
+- 🟡 Falta: error_fixtures, product_fixtures, test_helpers
 
 ---
 
