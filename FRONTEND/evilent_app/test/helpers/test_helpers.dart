@@ -1,6 +1,8 @@
 // 🎯 TEST HELPERS - Funciones auxiliares reutilizables
+// Estas son funciones comunes para tests de widgets
 
 import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 /// Espera a que la UI se actualice completamente
 Future<void> waitForUI(WidgetTester tester) async {
@@ -43,15 +45,12 @@ T findFirstWidget<T extends Widget>(WidgetTester tester) {
   return find.byType(T).evaluate().first.widget as T;
 }
 
-/// Scrollea hacia abajo
-Future<void> scrollDown(WidgetTester tester) async {
-  await tester.scroll(find.byType(ListView), const Offset(0, -300));
-  await tester.pumpAndSettle();
-}
-
-/// Scrollea hacia arriba
-Future<void> scrollUp(WidgetTester tester) async {
-  await tester.scroll(find.byType(ListView), const Offset(0, 300));
-  await tester.pumpAndSettle();
+/// Obtiene el texto de un widget Text
+String? getTextFromWidget(WidgetTester tester, String text) {
+  try {
+    return (find.text(text).evaluate().first.widget as Text).data;
+  } catch (e) {
+    return null;
+  }
 }
 

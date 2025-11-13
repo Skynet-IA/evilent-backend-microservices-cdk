@@ -1,6 +1,5 @@
 // 🎯 PRODUCT FIXTURES - Productos y órdenes para tests
-
-import 'package:evilent_app/core/providers/app_data_provider.dart';
+// VALIDAMOS la realidad: Mapeamos exactamente lo que el código retorna
 
 /// Productos de ejemplo
 class ProductFixtures {
