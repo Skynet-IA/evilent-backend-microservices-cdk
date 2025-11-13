@@ -2,8 +2,10 @@
 # Desarrollado siguiendo las reglas de seguridad y limpieza
 
 # ==================== CARPETAS A IGNORAR ====================
-# FRONTEND - Mantener localmente, no en git
+# FRONTEND - Mantener localmente, no en git (excepto roadmaps)
 FRONTEND/
+!FRONTEND/ROADMAP_*.md
+!FRONTEND/TESTING_*.md
 
 # Node modules
 node_modules/
