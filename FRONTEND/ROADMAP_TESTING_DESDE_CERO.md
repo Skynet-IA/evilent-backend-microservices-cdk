@@ -671,20 +671,22 @@ Escribir tests para cerrar gaps.
 
 | Fase | Tarea | Horas | Tests | Estado |
 |------|-------|-------|-------|--------|
-| **0** | Preparación | 1 | - | 🟢 70% HECHO |
+| **0** | Preparación | 2 | - | 🟢 100% HECHO ✅ |
 | **1** | Services | 20 | 60 | 🔴 PENDIENTE |
 | **2** | Providers | 15 | 50 | 🔴 PENDIENTE |
 | **3** | Utils & Errors | 8 | 30 | 🔴 PENDIENTE |
 | **4** | Widgets/Screens | 25 | 120 | 🔴 PENDIENTE |
 | **5** | Integration | 10 | 20 | 🔴 PENDIENTE |
 | **6** | Coverage | 5 | - | 🔴 PENDIENTE |
-| **TOTAL** | | **84 horas restantes** | **280 tests** | 📊 80%+ cobertura |
+| **TOTAL** | | **83 horas restantes** | **280 tests** | 📊 80%+ cobertura |
 
 **FASE 0 Progreso:**
 - ✅ Tests viejos eliminados
-- ✅ Fixtures base creadas (auth, app_data)
+- ✅ Fixtures base creadas (auth, app_data, error, product)
 - ✅ Test App Wrapper creado
-- 🟡 Falta: error_fixtures, product_fixtures, test_helpers
+- ✅ Test Helpers creados
+- ✅ README.md de tests creado
+- 🟢 **FASE 0: 100% COMPLETADA**
 
 ---
 
