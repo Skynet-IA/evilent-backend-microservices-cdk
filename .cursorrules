@@ -1,6 +1,6 @@
 # 🏆 REGLAS DE ORO - PROYECTO EVILENT
 
-## 📋 10 REGLAS FUNDAMENTALES PARA EL DESARROLLO
+## 📋 10 REGLAS DE ORO PARA EL BACKEND AWS CDK
 
 ### 1. 🚫 NUNCA escribir código muerto o especulativo
 **Regla:** Solo implementar funcionalidad que se necesita AHORA, no "por si acaso".
@@ -102,18 +102,63 @@
 
 ---
 
-### 8. 🧪 SIEMPRE escribir tests para código crítico
-**Regla:** Tests unitarios para lógica de negocio, tests de integración para APIs.
+### 8. 🧪 SIEMPRE escribir tests para código crítico (BACKEND)
+**Regla:** Tests unitarios para servicios + tests de integración para APIs + tests E2E.
+
+**Coverage Obligatorio:**
+- ✅ **Services:** >90% (lógica de negocio crítica)
+- ✅ **Handlers/Controllers:** >85% (APIs, validación)
+- ✅ **Utils:** >80% (funciones reutilizables)
+- ✅ **TOTAL:** >80% del proyecto
+
+**Estructura de Tests (Backend):**
+```typescript
+test/
+├── unit/
+│   ├── services/          ← Lógica de negocio (HIGH PRIORITY)
+│   ├── utils/             ← Funciones auxiliares
+│   └── db/                ← Queries, migrations
+├── integration/
+│   ├── api/               ← Endpoints completos
+│   └── db/                ← Transacciones, seeds
+├── e2e/
+│   └── workflows/         ← Flujos complete (signup, checkout, etc)
+└── mocks/                 ← Datos y servicios simulados
+```
+
+**Patrón Obligatorio (Arrange-Act-Assert):**
+```typescript
+// ✅ CORRECTO
+describe('AuthService', () => {
+  // Arrange: Setup con mocks
+  let mockDB;
+  beforeEach(() => {
+    mockDB = MockDB();
+  });
+  
+  // Act: Ejecutar código
+  test('signIn debe retornar token con credenciales válidas', async () => {
+    const token = await authService.signIn(email, password);
+    
+    // Assert: Verificar resultado
+    expect(token).toBeDefined();
+    expect(token.length).toBeGreaterThan(0);
+  });
+});
+```
 
 **Ejemplos:**
 - ❌ Código sin tests = confianza baja en refactoring
 - ❌ "Lo probaré manualmente después"
+- ❌ Tests solo de happy path (sin error handling)
 - ✅ Tests unitarios para services (con mocks)
 - ✅ Tests de integración para endpoints
-- ✅ Tests de validación de datos
-- ✅ Coverage > 70% para código crítico
+- ✅ Tests E2E para flujos críticos
+- ✅ Tests de validación de datos (Zod schemas)
+- ✅ Coverage > 80% en código crítico
+- ✅ Happy path + Error path + Edge cases
 
-**Justificación:** Confianza en refactoring, detección temprana de bugs, documentación viva.
+**Justificación:** Confianza en refactoring, detección temprana de bugs, documentación viva, prevención de bugs en producción.
 
 ---
 
@@ -148,6 +193,429 @@
 
 ---
 
+# 🎨 10 REGLAS DE ORO PARA FRONTEND (Flutter/Dart)
+
+## 📁 ESTRUCTURA DE CARPETAS OBLIGATORIA
+
+```
+lib/
+├── core/
+│   ├── utils/
+│   │   ├── app_colors.dart      ✅ OBLIGATORIO - Paleta de colores
+│   │   ├── app_dimens.dart      ✅ OBLIGATORIO - Dimensiones y espaciados
+│   │   ├── app_images.dart      ✅ OBLIGATORIO - Rutas de imágenes
+│   │   ├── app_icons.dart       ✅ OBLIGATORIO - Iconos personalizados
+│   │   ├── app_routes.dart      ✅ OBLIGATORIO - Rutas de navegación
+│   │   └── app_theme.dart       ✅ OBLIGATORIO - Configuración de tema
+│   ├── providers/               ✅ Riverpod providers globales
+│   └── services/                ✅ Servicios (Auth, API, etc.)
+├── shared/
+│   ├── extensions/
+│   │   └── theme_extensions.dart ✅ OBLIGATORIO - Extensiones de contexto
+│   └── widgets/                 ✅ Widgets reutilizables
+└── features/
+    └── [feature_name]/
+        ├── screens/             ✅ Pantallas del feature
+        ├── widgets/             ✅ Widgets específicos del feature
+        ├── providers/           ✅ Providers del feature
+        └── routes/              ✅ Rutas del feature
+```
+
+---
+
+### 1. 🚫 NUNCA usar print() o debugPrint() en código de producción
+**Regla:** Usar un sistema de logging estructurado, nunca print statements directos.
+
+**Ejemplos:**
+- ❌ `print('User data: $userData')`
+- ❌ `debugPrint('Loading...')`
+- ❌ `print('Error: $error')`
+- ✅ Logger estructurado con niveles (info, error, debug, warning)
+- ✅ Logs enviados a Firebase Crashlytics en producción
+- ✅ `debugPrint('[ClassName] 🎯 Contexto específico')` (solo para debugging local)
+
+**Justificación:** print() sin niveles, sin filtrado, sin contexto. En release mode desaparece. Logging estructurado = análisis de errores automático.
+
+---
+
+### 2. 🔐 NUNCA hardcodear credenciales, URLs, colores, dimensiones o rutas
+**Regla:** TODO debe estar en archivos centralizados de `lib/core/utils/`.
+
+**Ejemplos:**
+- ❌ `const apiUrl = "https://api.prod.evilent.com/v1"` (hardcoded)
+- ❌ `color: Color(0xFF6200EE)` (color mágico)
+- ❌ `EdgeInsets.all(16)` (dimensión mágica)
+- ❌ `Image.asset('assets/images/logo.png')` (ruta hardcodeada)
+- ❌ `Navigator.pushNamed(context, '/home')` (ruta hardcodeada)
+- ✅ `const apiUrl = String.fromEnvironment('API_URL')` (en prod.env)
+- ✅ `color: AppColors.primary` (de app_colors.dart)
+- ✅ `EdgeInsets.all(AppDimens.spacingMedium)` (de app_dimens.dart)
+- ✅ `Image.asset(AppImages.logo)` (de app_images.dart)
+- ✅ `Navigator.pushNamed(context, AppRoutes.home)` (de app_routes.dart)
+
+**Archivos obligatorios:**
+```dart
+// lib/core/utils/app_colors.dart
+class AppColors {
+  static const Color primary = Color(0xFF6200EE);
+  static const Color secondary = Color(0xFF03DAC6);
+  // ...
+}
+
+// lib/core/utils/app_dimens.dart
+class AppDimens {
+  static const double spacingSmall = 8.0;
+  static const double spacingMedium = 16.0;
+  static const double spacingLarge = 24.0;
+  // ...
+}
+
+// lib/core/utils/app_images.dart
+class AppImages {
+  static const String logo = 'assets/images/logo.png';
+  static const String background = 'assets/images/background.jpg';
+  // ...
+}
+
+// lib/core/utils/app_icons.dart
+class AppIcons {
+  static const IconData email = Icons.email_outlined;
+  static const IconData password = Icons.lock_outline;
+  // ...
+}
+
+// lib/core/utils/app_routes.dart
+class AppRoutes {
+  static const String home = '/home';
+  static const String login = '/login';
+  static const String profile = '/profile';
+  // ...
+}
+```
+
+**Justificación:** Valores hardcodeados = inconsistencia, mantenimiento imposible. Centralización = cambio en UN solo lugar.
+
+---
+
+### 3. 🎨 SIEMPRE usar extensiones de contexto para acceder a tema y dimensiones
+**Regla:** NUNCA escribir `Theme.of(context).colorScheme.primary`, usar `context.primaryColor`.
+
+**Ejemplos:**
+- ❌ `Theme.of(context).colorScheme.primary` (verboso)
+- ❌ `Theme.of(context).textTheme.headlineLarge` (verboso)
+- ❌ `EdgeInsets.symmetric(horizontal: AppDimens.spacingMedium)` (verboso)
+- ❌ `TextFormField(decoration: InputDecoration(...))` (100+ líneas)
+- ✅ `context.primaryColor` (limpio)
+- ✅ `context.headlineLarge` (limpio)
+- ✅ `context.paddingHorizontalMedium` (limpio)
+- ✅ `context.themedTextFormField(...)` (pre-configurado)
+
+**Archivo obligatorio:**
+```dart
+// lib/shared/extensions/theme_extensions.dart
+extension ThemeColorsExtension on BuildContext {
+  Color get primaryColor => Theme.of(this).colorScheme.primary;
+  Color get secondaryColor => Theme.of(this).colorScheme.secondary;
+  Color get errorColor => Theme.of(this).colorScheme.error;
+  Color get surfaceColor => Theme.of(this).colorScheme.surface;
+  // ... todos los colores del tema
+}
+
+extension ThemeTextExtension on BuildContext {
+  TextStyle get headlineLarge => Theme.of(this).textTheme.headlineLarge!;
+  TextStyle get bodyMedium => Theme.of(this).textTheme.bodyMedium!;
+  TextStyle get labelLarge => Theme.of(this).textTheme.labelLarge!;
+  // ... todos los estilos de texto
+}
+
+extension ThemeDimensExtension on BuildContext {
+  double get spacingSmall => AppDimens.spacingSmall;
+  double get spacingMedium => AppDimens.spacingMedium;
+  EdgeInsets get paddingMedium => AppDimens.paddingMedium;
+  EdgeInsets get paddingHorizontalMedium => AppDimens.paddingHorizontalMedium;
+  // ... todas las dimensiones
+}
+
+extension ThemeUtilsExtension on BuildContext {
+  // Widgets pre-configurados con tema
+  Widget themedButton({...}) { /* ElevatedButton con estilos */ }
+  TextFormField themedTextFormField({...}) { /* TextField con estilos */ }
+  Container themedContainer({...}) { /* Container con estilos */ }
+  // ... más helpers
+}
+```
+
+**Uso en pantallas:**
+```dart
+// ❌ ANTES (verboso, hardcodeado):
+Container(
+  padding: EdgeInsets.symmetric(horizontal: 24.0),
+  child: TextFormField(
+    decoration: InputDecoration(
+      labelText: 'Email',
+      prefixIcon: Icon(Icons.email_outlined),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12.0),
+      ),
+      // ... 20 líneas más
+    ),
+  ),
+)
+
+// ✅ AHORA (limpio, centralizado):
+Container(
+  padding: context.paddingHorizontalMedium,
+  child: context.themedTextFormField(
+    controller: _emailController,
+    labelText: 'Email',
+    prefixIcon: AppIcons.email,
+    keyboardType: TextInputType.emailAddress,
+    validator: Validation.validateEmail,
+  ),
+)
+```
+
+**Justificación:** Código limpio, mantenible, consistente. Cambiar estilo = modificar 1 extensión, no 50+ pantallas.
+
+---
+
+### 4. 🛡️ SIEMPRE usar ConsumerWidget en lugar de StatelessWidget
+**Regla:** TODOS los widgets deben ser `ConsumerWidget` para acceder a Riverpod providers.
+
+**Ejemplos:**
+- ❌ `class MyScreen extends StatelessWidget { ... }` (no puede acceder a providers)
+- ❌ `class MyScreen extends StatefulWidget { ... }` (sin Riverpod)
+- ✅ `class MyScreen extends ConsumerWidget { ... }` (acceso a providers)
+- ✅ `class MyScreen extends ConsumerStatefulWidget { ... }` (con estado + providers)
+
+**Cuándo usar cada uno:**
+```dart
+// ✅ ConsumerWidget - Para widgets SIN estado interno
+class ProfileScreen extends ConsumerWidget {
+  const ProfileScreen({super.key});
+  
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authProvider);
+    return Scaffold(...);
+  }
+}
+
+// ✅ ConsumerStatefulWidget - Para widgets CON estado interno
+class LoginScreen extends ConsumerStatefulWidget {
+  const LoginScreen({super.key});
+  
+  @override
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends ConsumerState<LoginScreen> {
+  final _emailController = TextEditingController();
+  
+  @override
+  Widget build(BuildContext context) {
+    final authState = ref.watch(authProvider);
+    return Scaffold(...);
+  }
+}
+
+// ❌ StatelessWidget - SOLO para widgets que NO necesitan providers
+// (muy raro, casi siempre necesitas acceso a tema o estado)
+class SimpleIcon extends StatelessWidget {
+  final IconData icon;
+  const SimpleIcon({super.key, required this.icon});
+  
+  @override
+  Widget build(BuildContext context) => Icon(icon);
+}
+```
+
+**Justificación:** ConsumerWidget = acceso a providers, estado global, tema. StatelessWidget = limitado, no escalable.
+
+---
+
+### 5. 🎯 SIEMPRE usar Dependency Injection con GetIt
+**Regla:** Registrar servicios en `lib/core/utils/locator.dart`, acceder vía `locator<ServiceType>()`.
+
+**Ejemplos:**
+- ❌ `class AuthService { static final instance = AuthService._(); }` (singleton manual)
+- ❌ `final authService = AuthService()` (crear nuevas instancias)
+- ✅ `locator.registerLazySingleton<AuthService>(() => AuthService())`
+- ✅ `final authService = locator<AuthService>()`
+- ✅ Fácil testear (inyectar mock en tests)
+
+**Justificación:** Singletons manuales = acoplamiento fuerte. GetIt = control centralizado de ciclo de vida. Fácil cambiar implementación.
+
+---
+
+### 6. 🔄 SIEMPRE separar lógica de negocio de UI (Services, Providers, Widgets)
+**Regla:** Estructura: `Services` (lógica) → `Providers` (estado) → `Widgets` (UI).
+
+**Ejemplos:**
+- ❌ Lógica de auth directamente en LoginScreen
+- ❌ Llamadas HTTP dentro de build()
+- ✅ `AuthService` → `AuthProvider` (Riverpod) → `LoginScreen`
+- ✅ `UserProfileService` → `UserProfileProvider` → `ProfileScreen`
+
+**Justificación:** Lógica en UI = imposible testear. Services reutilizable. Providers = estado centralizado. Testing solo mockeamos servicios.
+
+---
+
+### 7. 🌐 SIEMPRE encapsular Amplify/Firebase en servicios
+**Regla:** UI no conoce Amplify. Solo importa `AuthService`, que traduce excepciones a errores de dominio.
+
+**Ejemplos:**
+- ❌ `import 'package:amplify_flutter/amplify_flutter.dart'` en LoginScreen
+- ❌ `try { await Amplify.Auth.signIn(...) } catch (e) { ... }` en UI
+- ✅ `final authService = locator<AuthService>()`
+- ✅ `await authService.signIn(email, password)`
+- ✅ `AuthService` maneja excepciones de Amplify
+
+**Justificación:** Amplify = detalles de implementación. Cambiar de Amplify a Firebase = cambiar 1 archivo. Sin encapsulación = cambiar 50+.
+
+---
+
+### 8. 🧪 SIEMPRE escribir tests para código crítico (FRONTEND)
+**Regla:** Tests unitarios (servicios/providers) + tests de widgets (screens/componentes) + tests de integración (flujos).
+
+**Coverage Obligatorio:**
+- ✅ **Services:** >90% (AuthService, BootService, etc)
+- ✅ **Providers:** >85% (Riverpod state management)
+- ✅ **Screens/Widgets:** >80% (UI crítica)
+- ✅ **TOTAL:** >80% del proyecto
+
+**Estructura de Tests (Frontend/Flutter):**
+```dart
+test/
+├── fixtures/              ← Datos reutilizables (DRY)
+│   ├── auth_fixtures.dart
+│   ├── app_data_fixtures.dart
+│   └── error_fixtures.dart
+├── helpers/               ← Utilidades de testing
+│   ├── test_app_wrapper.dart
+│   └── test_helpers.dart
+├── mocks/                 ← Mocks de servicios
+│   ├── custom_mocks/
+│   └── repositories/
+├── unit/                  ← Tests de lógica pura (50%)
+│   ├── services/          ← HIGH PRIORITY
+│   ├── providers/         ← HIGH PRIORITY
+│   ├── utils/
+│   └── error_system/
+├── widget/                ← Tests de UI (40%)
+│   ├── screens/           ← Pantallas principales
+│   └── components/        ← Widgets reutilizables
+└── integration/           ← Flujos completos (10%)
+    ├── auth_flow_test.dart
+    ├── boot_flow_test.dart
+    └── shopping_flow_test.dart
+```
+
+**Patrón Obligatorio (AAA: Arrange-Act-Assert):**
+```dart
+// ✅ CORRECTO
+void main() {
+  group('AuthService -', () {
+    late MockConnectivityService mockConnectivity;
+    late AuthService authService;
+    
+    setUp(() {
+      // ARRANGE: Preparar mocks y estado inicial
+      mockConnectivity = MockConnectivityService();
+      authService = AuthService(connectivity: mockConnectivity);
+    });
+    
+    test('signIn debe retornar true con credenciales válidas', () async {
+      // ACT: Ejecutar función bajo prueba
+      final result = await authService.signIn(
+        email: 'test@example.com',
+        password: 'SecurePass@123',
+      );
+      
+      // ASSERT: Verificar resultado
+      expect(result, isTrue);
+    });
+    
+    test('signIn debe lanzar InvalidCredentialsError con password incorrecto', () async {
+      expect(
+        () => authService.signIn(email: 'test@example.com', password: 'wrong'),
+        throwsA(isA<InvalidCredentialsError>()),
+      );
+    });
+  });
+}
+```
+
+**Reglas Críticas:**
+1. **Happy Path + Error Path + Edge Cases** (NO solo happy path)
+   - ✅ Caso exitoso (email válido, password correcto)
+   - ✅ Caso de error (credenciales incorrectas)
+   - ✅ Casos límite (email vacío, password muy corto)
+
+2. **Fixtures Compartidas (DRY)**
+   ```dart
+   // ❌ INCORRECTO: Duplicar datos en cada test
+   test('test 1', () { final email = 'test@example.com'; });
+   test('test 2', () { final email = 'test@example.com'; }); // Duplicado
+   
+   // ✅ CORRECTO: Usar fixtures centralizadas
+   test('test 1', () { final email = AuthFixtures.validEmail; });
+   test('test 2', () { final email = AuthFixtures.validEmail; });
+   ```
+
+3. **Mocks Realistas**
+   - ✅ Mocks reflejan estructura real de código
+   - ❌ Mocks simplificados que no son realistas
+
+4. **Tests Independientes**
+   - ✅ Cada test usa setUp() para estado limpio
+   - ❌ Tests que dependen de otros tests
+
+**Ejemplos:**
+- ❌ UI sin tests = confianza baja en cambios
+- ❌ Servicios sin tests = bugs ocultos en producción
+- ❌ Tests solo de happy path (sin error handling)
+- ✅ Tests unitarios para services (>90% coverage)
+- ✅ Tests de providers (Riverpod state transitions)
+- ✅ Tests de widgets (LoginScreen, HomeScreen, etc)
+- ✅ Tests de integración (flujos auth, boot, shopping)
+- ✅ Mocks con mockito o mocktail
+- ✅ Coverage > 80% en código crítico
+
+**Justificación:** Sin tests = cada cambio requiere testing manual. Bugs en servicios/providers = afectan toda la app. Tests = confianza en refactoring, prevención de regresiones.
+
+---
+
+### 9. 🎨 SIEMPRE validar inputs del usuario ANTES de procesarlos
+**Regla:** Validar email, campos requeridos, formatos, longitudes en el cliente Y en el servidor.
+
+**Ejemplos:**
+- ❌ Aceptar email vacío de TextField
+- ❌ Enviar formulario sin validar requeridos
+- ❌ Permitir contraseña < 8 caracteres
+- ✅ `context.themedTextFormField(validator: Validation.validateEmail)`
+- ✅ `Form.validate()` antes de enviar
+- ✅ Validación visual inmediata (error text rojo)
+- ✅ Validación del servidor (defense in depth)
+
+**Justificación:** Sin validación = experiencia frustrante. Validación cliente = feedback inmediato. Validación servidor = seguridad.
+
+---
+
+### 10. 🔍 SIEMPRE manejar errores con AppError y ErrorUtils
+**Regla:** Capturar excepciones, convertir a `AppError`, loguear y mostrar al usuario.
+
+**Ejemplos:**
+- ❌ Ignorar excepciones (try-catch vacío)
+- ❌ Mostrar mensaje de error técnico al usuario
+- ✅ `try { ... } catch (e, st) { final err = AppError.fromException(e, st); ErrorUtils.logAndReport(err); }`
+- ✅ Mostrar mensaje amigable al usuario
+- ✅ Log automático en Firebase Crashlytics
+
+**Justificación:** Ignorar errores = comportamiento impredecible. AppError = clasificación. ErrorUtils.logAndReport = Crashlytics automático.
+
+---
+
 ## 🎯 APLICACIÓN DE LAS REGLAS
 
 ### En Backend (TypeScript/CDK):
@@ -163,16 +631,16 @@
 10. ✅ Costos optimizados (Single-AZ, sin NAT, Bastion detención)
 
 ### En Frontend (Flutter/Dart):
-1. ✅ Sin código especulativo
-2. ✅ Credenciales en prod.env (gitignored)
-3. ✅ Logger estructurado (no print statements)
-4. ✅ Constants centralizados
-5. ✅ Validación de inputs del usuario
-6. ✅ Manejo de errores robusto
-7. ✅ README actualizado
+1. ✅ Logger estructurado (debugPrint con contexto, no print statements)
+2. ✅ CERO hardcoding (app_colors, app_dimens, app_images, app_icons, app_routes)
+3. ✅ Extensiones de contexto (context.primaryColor, context.themedButton, etc.)
+4. ✅ ConsumerWidget SIEMPRE (acceso a providers y estado global)
+5. ✅ GetIt para DI (servicios registrados en locator)
+6. ✅ Separación Services → Providers → Widgets
+7. ✅ Amplify/Firebase encapsulado en servicios
 8. ✅ Tests de widgets y unitarios
-9. ✅ Consistencia en estructura (features, core, shared)
-10. ✅ Optimización de builds (release mode)
+9. ✅ Validación de inputs (cliente Y servidor)
+10. ✅ Manejo de errores con AppError y ErrorUtils
 
 ### En Infraestructura (CDK/Makefiles):
 1. ✅ Sin recursos especulativos
@@ -240,6 +708,218 @@ Antes de hacer commit, verifica:
 
 **Recuerda:** Código es leído 10 veces más de lo que es escrito.
 Escribe para el próximo desarrollador (que podrías ser tú en 6 meses).
+
+---
+
+# 🧪 SECCIÓN CENTRAL: TESTING (BACKEND + FRONTEND)
+
+## 🎯 PRINCIPIOS UNIVERSALES DE TESTING
+
+### Coverage Mínimo por Capa
+```
+BACKEND (TypeScript/CDK):
+├─ Services: >90%
+├─ Handlers/Controllers: >85%
+├─ Utils: >80%
+└─ TOTAL: >80%
+
+FRONTEND (Flutter/Dart):
+├─ Services: >90%
+├─ Providers: >85%
+├─ Screens/Widgets: >80%
+└─ TOTAL: >80%
+```
+
+### Pirámide de Tests Obligatoria
+```
+                △
+              /E\        Integration (10-20%)
+             /   \       Flujos end-to-end
+            ╱─────╲
+           /       \     Widget/E2E (30-40%)
+          /   M     \    APIs, Screens, componentes
+         ╱───────────╲
+        /             \   Unit (50-60%)
+       /     U         \  Services, providers, utils
+      ╱─────────────────╲
+     /___________________\ 
+
+NUNCA:
+❌ 90% unit + 10% integration
+❌ 100% happy path (sin edge cases)
+❌ Tests que se pasan solos sin código
+```
+
+### Patrón AAA (Arrange-Act-Assert) - OBLIGATORIO
+```
+✅ TODOS los tests siguen este patrón:
+
+1. ARRANGE: Preparar datos, mocks, estado
+   - Crear fixtures
+   - Configurar mocks
+   - Setup inicial
+
+2. ACT: Ejecutar la función/código bajo prueba
+   - Una sola acción principal
+   - Sin múltiples acciones
+
+3. ASSERT: Verificar resultado
+   - Una o múltiples aserciones (mismo comportamiento)
+   - Usar expect(), toEqual(), throws(), etc.
+```
+
+### Nomenclatura de Tests
+```
+✅ CORRECTO (descriptivo):
+- 'debe retornar true con credenciales válidas'
+- 'debe lanzar InvalidCredentialsError con password incorrecto'
+- 'debe mostrar error de validación si email está vacío'
+
+❌ INCORRECTO (vago):
+- 'test 1'
+- 'debería funcionar'
+- 'verifica signIn'
+```
+
+### Happy Path + Error Path + Edge Cases
+```
+NUNCA solo happy path. SIEMPRE incluir:
+
+1. HAPPY PATH (caso exitoso)
+   ✅ Entrada válida → Resultado esperado
+
+2. ERROR PATH (casos de error)
+   ✅ Entrada inválida → Exception o error message
+   ✅ Condiciones de fallo → Comportamiento correcto
+
+3. EDGE CASES (límites)
+   ✅ Valores vacíos, nulos, muy grandes/pequeños
+   ✅ Condiciones límite del negocio
+```
+
+### Fixtures Compartidas (DRY)
+```
+NUNCA duplicar datos de prueba:
+
+❌ INCORRECTO:
+test('test 1', () {
+  final email = 'test@example.com';
+  final password = 'Pass@123';
+});
+test('test 2', () {
+  final email = 'test@example.com';  // Duplicado
+  final password = 'Pass@123';       // Duplicado
+});
+
+✅ CORRECTO:
+// fixtures/auth_fixtures.dart
+class AuthFixtures {
+  static const String validEmail = 'test@example.com';
+  static const String validPassword = 'Pass@123';
+}
+
+test('test 1', () {
+  final email = AuthFixtures.validEmail;
+  final password = AuthFixtures.validPassword;
+});
+test('test 2', () {
+  final email = AuthFixtures.validEmail;
+  final password = AuthFixtures.validPassword;
+});
+```
+
+### Mocks Deben Reflejar Realidad
+```
+❌ INCORRECTO: Mock simplificado no realista
+class MockDB extends Mock implements Database {
+  @override
+  Future<User?> findUser(String id) async => User(id: id);
+}
+
+✅ CORRECTO: Mock que refleja estructura real
+class MockDB extends Mock implements Database {
+  @override
+  Future<User?> findUser(String id) async {
+    // Mismo manejo de errores que código real
+    if (id.isEmpty) throw InvalidInputError();
+    return super.noSuchMethod(...);
+  }
+}
+```
+
+### Tests Independientes
+```
+✅ Cada test DEBE:
+- Tener su propio setUp()
+- No depender de otros tests
+- Ser ejecutable en cualquier orden
+- Limpiar estado en tearDown()
+
+❌ NUNCA:
+- test 1 prepara estado para test 2
+- Tests que se pasan solo si se corren en orden
+- Estado compartido entre tests
+```
+
+### Verificar Contratos Completos
+```
+BACKEND (APIs):
+❌ INCORRECTO:
+expect(response.statusCode, 200);
+
+✅ CORRECTO:
+const expected = {
+  'success': true,
+  'data': { 'userId': '123' },
+  'timestamp': isA<DateTime>(),
+};
+expect(json.decode(response.body), expected);
+
+FRONTEND (UI):
+❌ INCORRECTO:
+expect(find.byType(Text), findsWidgets);
+
+✅ CORRECTO:
+expect(find.text('Email'), findsOneWidget);
+expect(find.byType(TextField), findsOneWidget);
+expect(find.byType(ElevatedButton), findsOneWidget);
+```
+
+---
+
+## 📋 CHECKLIST ANTES DE COMMIT
+
+Antes de hacer commit de código con tests:
+
+- [ ] ✅ Tests cubren happy path + error path + edge cases
+- [ ] ✅ Patrón AAA consistente en todos
+- [ ] ✅ Fixtures compartidas (sin duplicación)
+- [ ] ✅ Nombres descriptivos de tests
+- [ ] ✅ Mocks reflejan estructura real
+- [ ] ✅ Coverage > 80% en código crítico
+- [ ] ✅ Todos los tests PASAN localmente
+- [ ] ✅ setUp() y tearDown() limpian estado
+- [ ] ✅ Sin tests flaky (intermitentes)
+- [ ] ✅ Sin console.log o print statements en tests
+
+---
+
+## 🚨 VIOLACIONES GRAVES
+
+El agente NUNCA debe:
+
+1. ❌ Aceptar tests sin happy path + error path + edge cases
+2. ❌ Permitir tests que solo prueban casos felices
+3. ❌ Aceptar coverage < 80% en código crítico
+4. ❌ Permitir mocks que no reflejan estructura real
+5. ❌ Aceptar duplicación de datos en fixtures
+6. ❌ Permitir tests que dependen unos de otros
+7. ❌ Aceptar nombres de tests vagos o no descriptivos
+8. ❌ Permitir estado compartido entre tests
+9. ❌ Aceptar tests flaky o intermitentes
+10. ❌ Permitir validación parcial (solo algunos campos)
+
+Si detectas violaciones: **PAUSAR y CORREGIR antes de continuar**.
 
 ---
 
