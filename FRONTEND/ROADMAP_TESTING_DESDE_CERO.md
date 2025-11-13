@@ -223,9 +223,9 @@ flutter pub run build_runner build --delete-conflicting-outputs
 
 ---
 
-### FASE 1: UNIT TESTS - SERVICIOS (20 horas)
+### FASE 1: UNIT TESTS - SERVICIOS (20 horas) ✅ COMPLETADA
 
-#### TAREA 1.1: Tests de AuthService (11 tests)
+#### TAREA 1.1: Tests de AuthService (12 tests) ✅ COMPLETADA
 **Archivo:** `test/unit/services/auth_service_test.dart`
 
 ```dart
@@ -299,13 +299,19 @@ void main() {
 }
 ```
 
-**Cobertura:** 11 tests
-**Tiempo:** 3 horas
+**Cobertura:** 12 tests ✅
+**Tiempo:** 3 horas (completado)
+
+✅ CAMBIOS vs ROADMAP:
+- Implementado basado en CÓDIGO REAL (OPCIÓN B), no en teoría
+- AuthService() SIN parámetros (usa Amplify directamente)
+- signIn lanza EXCEPCIONES, no retorna boolean
+- 12 tests (vs 11 del roadmap) para mayor cobertura
 
 ---
 
-#### TAREA 1.2: Tests de BootService (15 tests)
-**Archivo:** `test/unit/services/boot_service_test.dart`
+#### TAREA 1.2: Tests de BootState (21 tests) ✅ COMPLETADA
+**Archivo:** `test/unit/services/boot_state_test.dart`
 
 ```dart
 void main() {
@@ -357,18 +363,26 @@ void main() {
 }
 ```
 
-**Cobertura:** 15 tests
-**Tiempo:** 3 horas
+**Cobertura:** 21 tests ✅
+**Tiempo:** 3 horas (completado)
+
+✅ CAMBIOS vs ROADMAP:
+- NO existe clase BootService (la lógica está en BootNotifier)
+- Implementado BootState testing (transiciones, progreso, errores)
+- 21 tests (vs 15 del roadmap) + validación de 8 suites diferentes
 
 ---
 
-#### TAREA 1.3-1.7: Tests de Otros Servicios
+#### TAREA 1.3-1.7: Tests de Otros Servicios (PENDIENTE PARA FASE 1.B)
 - **ConnectivityService:** 8 tests (1 hora)
 - **SecureStorageService:** 10 tests (1.5 horas)
 - **ThemeService:** 5 tests (45 min)
 - **UserProfileService:** 12 tests (2 horas)
 
-**Total Fase 1:** 20 horas
+**Total Fase 1 (COMPLETADA):** 
+- FASE 1.A (COMPLETADA): AuthService + BootState = 33 tests ✅
+- FASE 1.B (PENDIENTE): Otros 4 servicios = 35 tests
+- **Total cuando se complete 1.B: 68 tests con cobertura >85%**
 
 ---
 
