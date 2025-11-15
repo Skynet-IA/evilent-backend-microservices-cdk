@@ -11,7 +11,7 @@ import rateLimit from 'express-rate-limit';
 import { SERVICE_CONFIG, PORT, SERVICE_NAME } from '../config/constants';
 import logger from '../utility/logger';
 import { requestIdMiddleware } from '../utility/request-id';
-import { optionalAuthMiddleware } from '../auth/jwt-auth';
+import { cognitoAuthMiddleware } from '../auth/cognito-middleware';
 import { registerUserRoutes, logAvailableRoutes } from '../api/user.handler';
 import { internalServerErrorResponse } from '../utility/response';
 
@@ -50,7 +50,8 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
 });
 
 // Optional auth middleware
-app.use(optionalAuthMiddleware);
+// Cognito Authentication Middleware (REGLA #6: Defense in depth)
+app.use(cognitoAuthMiddleware);
 
 // Rate Limiting (ACTIVIDAD #4)
 const rateLimiter = rateLimit({

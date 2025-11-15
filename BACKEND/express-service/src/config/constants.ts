@@ -73,17 +73,22 @@ export const TIMEOUT_CONFIG = {
 } as const;
 
 // ============================================================================
-// AUTHENTICATION CONFIGURATION - Cognito
+// AUTHENTICATION CONFIGURATION - Cognito (AWS)
 // ============================================================================
 
+/**
+ * REGLA DE SEGURIDAD: Cognito credentials DEBEN estar en variables de entorno
+ * Fail-fast si no están configuradas (no permitir valores por defecto vacíos)
+ */
 export const AUTH_CONFIG = {
-  COGNITO_POOL_ID: process.env.COGNITO_POOL_ID || 'local-pool-id',
-  COGNITO_CLIENT_ID: process.env.COGNITO_CLIENT_ID || 'local-client-id',
-  COGNITO_REGION: process.env.COGNITO_REGION || 'us-east-1',
-  JWT_SECRET: process.env.JWT_SECRET || 'local-jwt-secret-for-testing',
-  JWT_EXPIRY: '24h',
-  JWT_ALGORITHM: 'HS256'
+  COGNITO_POOL_ID: process.env.COGNITO_POOL_ID || '',
+  COGNITO_APP_CLIENT_ID: process.env.COGNITO_APP_CLIENT_ID || '',
+  COGNITO_REGION: process.env.COGNITO_REGION || 'us-east-1'
 } as const;
+
+// EXPORTS para acceso directo (compatibilidad con cognito-verifier.ts)
+export const COGNITO_POOL_ID = AUTH_CONFIG.COGNITO_POOL_ID;
+export const COGNITO_APP_CLIENT_ID = AUTH_CONFIG.COGNITO_APP_CLIENT_ID;
 
 // ============================================================================
 // DATABASE CONFIGURATION - (Opcional)

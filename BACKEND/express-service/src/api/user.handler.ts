@@ -238,16 +238,15 @@ const handlers: Record<string, (req: Request, res: Response) => Promise<void>> =
   /**
    * GET /user/profile - Obtener perfil del usuario autenticado
    * 
-   * ✅ ENDPOINT PARA FRONTEND
+   * ✅ ENDPOINT PARA FRONTEND (COGNITO OBLIGATORIO)
    * - Requiere JWT válido de Cognito en Authorization header
    * - Retorna datos del usuario autenticado
-   * - El middleware optionalAuthMiddleware extrae userId del JWT
+   * - Middleware cognitoAuthMiddleware extrae userId del JWT
    */
   getProfile: async (req: Request, res: Response) => {
     try {
-      // El middleware optionalAuthMiddleware debería haber populado req.user
-      // Por ahora, usar ID mock desde query params (desarrollo)
-      const userId = (req as any).userId || req.query.userId;
+      // El middleware cognitoAuthMiddleware debería haber populado req.userId
+      const userId = req.userId || req.query.userId;
 
       if (!userId) {
         validationErrorResponse(res, [
