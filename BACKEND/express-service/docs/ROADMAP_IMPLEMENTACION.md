@@ -230,18 +230,43 @@ FRONTEND ESPERANDO:
    TOTAL: 2.25h
 
 ✅ COMPLETADO REFACTORIZADO (Semana 2 - Part 2):
-├─ #8-10: APPROACH CORREGIDO - Eliminar código especulativo (bcrypt, auth local)
+├─ #8-10: APPROACH CORREGIDO - Eliminar código especulativo
 ├─ ✅ Crear GET /user/profile (obtener perfil autenticado)
 ├─ ✅ Crear POST /user/profile (actualizar perfil autenticado)
 └─ RAZÓN: Frontend usa Cognito + Amplify (no auth local en backend)
 
-👉 SIGUIENTE (Semana 2 - Part 3):
-├─ #11: GET /user/profile (depende #10) - 45min
-└─ #12: POST /user/profile (depende #11) - 1h
+✅ COMPLETADO (Semana 2 - Part 3):
+├─ #11: GET /user/profile ✅ (45min)
+│  └─ Obtener perfil del usuario autenticado
+│  └─ Requiere JWT de Cognito
+│  └─ Retorna estructura esperada por frontend
+│
+├─ #12: POST /user/profile ✅ (1h)
+│  └─ Actualizar firstName, lastName, email
+│  └─ Validación completa con Zod
+│  └─ Respuesta consistente
+│
+└─ #13-14: E2E Tests + Validación ✅ (1.75h)
+   ├─ 12/12 Tests pasan ✅
+   ├─ Validación de entrada (Zod)
+   ├─ Validación de respuesta (formato)
+   ├─ CORS headers presentes
+   ├─ X-Request-ID tracking
+   └─ Rate limiting activo
 
-👉 SIGUIENTE (Semana 2 - Part 4):
-├─ #13: Integration tests (depende #7) - 2h
-└─ #14: E2E tests (depende #10) - 1.5h
+⏸️ PAUSADO (Semana 2 - Part 4 - Refinamiento):
+├─ 🧪 Verificar funcionamiento real de express-service
+├─ 🔧 Refinamiento de endpoints basado en feedback
+├─ 📋 Comprobar integración con frontend (Cognito JWT)
+└─ 🚀 Workflows E2E DESPUÉS del refinamiento
+
+📊 CHECKLIST DE REFINAMIENTO:
+   ├─ [ ] Comprobar GET /user/profile con BD real
+   ├─ [ ] Comprobar POST /user/profile con BD real
+   ├─ [ ] Validar respuesta format vs frontend expectations
+   ├─ [ ] Probar CORS headers con cliente Flutter
+   ├─ [ ] Integrar con Cognito JWT (si es necesario)
+   └─ [ ] Ajustes finales antes de E2E Workflows
 
 👉 SIGUIENTE (Semana 3):
 ├─ #15: Validar CORS para Flutter - 30min
