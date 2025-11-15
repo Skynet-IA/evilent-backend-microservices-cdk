@@ -42,7 +42,7 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
-DROP TRIGGER IF NOT EXISTS update_users_updated_at ON users;
+DROP TRIGGER IF EXISTS update_users_updated_at ON users;
 CREATE TRIGGER update_users_updated_at
   BEFORE UPDATE ON users
   FOR EACH ROW
@@ -68,7 +68,7 @@ CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token ON refresh_tokens(token);
 CREATE INDEX IF NOT EXISTS idx_refresh_tokens_expires_at ON refresh_tokens(expires_at);
 
 -- Trigger para refresh_tokens
-DROP TRIGGER IF NOT EXISTS update_refresh_tokens_updated_at ON refresh_tokens;
+DROP TRIGGER IF EXISTS update_refresh_tokens_updated_at ON refresh_tokens;
 CREATE TRIGGER update_refresh_tokens_updated_at
   BEFORE UPDATE ON refresh_tokens
   FOR EACH ROW
