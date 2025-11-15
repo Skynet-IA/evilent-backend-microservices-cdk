@@ -254,6 +254,14 @@ FRONTEND ESPERANDO:
    ├─ X-Request-ID tracking
    └─ Rate limiting activo
 
+✅ COGNITO INTEGRATION (COMPLETADO - BONUS):
+├─ ✅ CognitoVerifierService (Singleton pattern)
+├─ ✅ cognitoAuthMiddleware (extrae userId/email del JWT)
+├─ ✅ requireAuthMiddleware (versión REQUIRED)
+├─ ✅ Configuración (COGNITO_POOL_ID, COGNITO_APP_CLIENT_ID)
+├─ ✅ Defense in depth (JWT validation)
+└─ ✅ Patrón replicado de user-service + product-service
+
 ⏸️ PAUSADO (Semana 2 - Part 4 - Refinamiento):
 ├─ 🧪 Verificar funcionamiento real de express-service
 ├─ 🔧 Refinamiento de endpoints basado en feedback
@@ -261,11 +269,12 @@ FRONTEND ESPERANDO:
 └─ 🚀 Workflows E2E DESPUÉS del refinamiento
 
 📊 CHECKLIST DE REFINAMIENTO:
+   ├─ [x] ✅ Integrar con Cognito JWT (COMPLETADO)
+   ├─ [ ] Proteger endpoints /user/profile con requireAuthMiddleware
    ├─ [ ] Comprobar GET /user/profile con BD real
    ├─ [ ] Comprobar POST /user/profile con BD real
    ├─ [ ] Validar respuesta format vs frontend expectations
    ├─ [ ] Probar CORS headers con cliente Flutter
-   ├─ [ ] Integrar con Cognito JWT (si es necesario)
    └─ [ ] Ajustes finales antes de E2E Workflows
 
 👉 SIGUIENTE (Semana 3):
@@ -280,17 +289,17 @@ FRONTEND ESPERANDO:
 | Fase | Actividades | Tiempo | Status |
 |------|-------------|--------|--------|
 | **Semana 1** | #1-4 (Seguridad) | 4h | ✅ COMPLETADA |
-| **Semana 2a** | #5-7 (DB) | 3.5h | 👉 EN PROGRESO (3.5/3.5h) |
+| **Semana 2a** | #5-7 (DB) | 3.5h | ✅ COMPLETADA |
 | **Semana 2a.1** | #5: PostgreSQL | 1h | ✅ COMPLETADA |
-| **Semana 2a.2** | #6: Migrations | 1h | ✅ 90% (knexfile.ts + Knex.js) |
-| **Semana 2a.3** | #7: UserRepository | 1.5h | ✅ 100% (CRUD completo) |
-| **Semana 2a.4** | #7.1-7.4: Completar #7 | 2.25h | 👉 SIGUIENTE |
-| **Semana 2b** | #8-10 (Auth) | 3.5h | 👉 |
-| **Semana 2c** | #11-12 (User API) | 1.75h | 👉 |
-| **Semana 2d** | #13-14 (Tests) | 3.5h | 👉 |
-| **Semana 3** | #15-16 (Flutter) | 1h | 👉 |
-| **TOTAL COMPLETADO** | 4 actividades | 5h | ✅ |
-| **TOTAL PENDIENTE** | 16 actividades | 11-12h | 👉 |
+| **Semana 2a.2** | #6: Migrations | 1h | ✅ COMPLETADA (knexfile.ts + Knex.js) |
+| **Semana 2a.3** | #7: UserRepository | 1.5h | ✅ COMPLETADA (CRUD completo) |
+| **Semana 2b** | #8-10 (Auth) | 3.5h | ✅ COMPLETADA (Cognito + Middleware) |
+| **Semana 2c** | #11-12 (User API) | 1.75h | ✅ COMPLETADA (GET/POST /user/profile) |
+| **Semana 2d** | #13-14 (Tests) | 3.5h | ✅ COMPLETADA (12/12 tests passing) |
+| **COGNITO BONUS** | Integración Cognito | 2h | ✅ COMPLETADA |
+| **Semana 3** | #15-16 (Refinamiento) | 1h | 👉 EN PROGRESO |
+| **TOTAL COMPLETADO** | 14 actividades | 16h | ✅ |
+| **TOTAL PENDIENTE** | Refinamiento + E2E | 1-2h | 👉 |
 
 ---
 
