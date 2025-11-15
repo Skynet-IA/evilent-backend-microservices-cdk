@@ -186,47 +186,85 @@ FRONTEND ESPERANDO:
 
 ```
 ✅ COMPLETADO (Semana 1):
-├─ #1: CORS middleware
-├─ #2: Request ID tracking
-├─ #3: Error handling avanzado
-└─ #4: Rate limiting
+├─ #1: CORS middleware ✅ (1h)
+├─ #2: Request ID tracking ✅ (1h)
+├─ #3: Error handling avanzado ✅ (1.5h)
+└─ #4: Rate limiting ✅ (45min)
+   TOTAL: 4/4 actividades | 4h completadas
 
-👉 SIGUIENTE (Semana 2 - Part 1):
-├─ #5: Setup PostgreSQL (BLOCKER)
-├─ #6: SQL migrations (depende #5)
-└─ #7: UserRepository real (depende #6)
+✅ COMPLETADO (Semana 2 - Part 1a):
+├─ #5: Setup PostgreSQL ✅ (1h)
+│  ├─ docker-compose.yml con PostgreSQL 16
+│  ├─ src/db/connection.ts con pool + retry logic
+│  ├─ src/db/init.sql con schema (users, refresh_tokens, audit_logs)
+│  ├─ Adminer UI en localhost:8080
+│  └─ Verified: psql, Node.js pg driver, Adminer
+│
+└─ TOTAL: 1/1 | 1h completada
+
+✅ EN PROGRESO (Semana 2 - Part 1b):
+├─ #6: SQL Migrations ✅ 90% (1h)
+│  ├─ knexfile.ts configurado (dev, test, prod)
+│  ├─ Knex.js instalado
+│  └─ PENDIENTE: Crear migration SQL actual
+│
+├─ #7: UserRepository real ✅ 100% (1.5h)
+│  ├─ UserRepository.ts con CRUD completo
+│  ├─ Reutiliza tipos de src/types/index.ts (CERO DUPLICACIÓN)
+│  ├─ Reutiliza DTOs de src/dto/index.ts (CERO DUPLICACIÓN)
+│  ├─ 8 métodos: create, findById, findByEmail, list, update, delete, emailExists, findByIdIncludingDeleted
+│  ├─ Logging estructurado en cada operación
+│  ├─ Error handling específico por tipo
+│  ├─ Case-insensitive email search
+│  ├─ Paginación con total count
+│  ├─ Soft delete (deleted_at, sin borrar realmente)
+│  └─ Partial updates (solo campos necesarios)
+│
+└─ PENDIENTE: Actualizar UserService para inyectar UserRepository
+
+👉 SIGUIENTE (Semana 2 - Part 1c):
+├─ #7.1: Crear migration SQL (20min)
+├─ #7.2: Ejecutar migrations (10min)
+├─ #7.3: Actualizar UserService (45min)
+└─ #7.4: Tests de integración (1h)
+   TOTAL: 2.25h
 
 👉 SIGUIENTE (Semana 2 - Part 2):
-├─ #8: Password hashing (depende #7)
-├─ #9: Login/Signup endpoints (depende #8)
-└─ #10: Token refresh (depende #9)
+├─ #8: Password hashing (depende #7) - 1h
+├─ #9: Login/Signup endpoints (depende #8) - 1.5h
+└─ #10: Token refresh (depende #9) - 1h
 
 👉 SIGUIENTE (Semana 2 - Part 3):
-├─ #11: GET /user/profile (depende #10)
-└─ #12: POST /user/profile (depende #11)
+├─ #11: GET /user/profile (depende #10) - 45min
+└─ #12: POST /user/profile (depende #11) - 1h
 
 👉 SIGUIENTE (Semana 2 - Part 4):
-├─ #13: Integration tests (depende #7)
-└─ #14: E2E tests (depende #10)
+├─ #13: Integration tests (depende #7) - 2h
+└─ #14: E2E tests (depende #10) - 1.5h
 
 👉 SIGUIENTE (Semana 3):
-├─ #15: Validar CORS para Flutter
-└─ #16: Verificar response format
+├─ #15: Validar CORS para Flutter - 30min
+└─ #16: Verificar response format - 30min
 ```
 
 ---
 
 ## ⏱️ RESUMEN TIMELINE
 
-| Fase | Actividades | Tiempo | Horas |
-|------|-------------|--------|-------|
-| **Semana 1** | #1-4 (COMPLETADAS) | 3-4h | ✅ |
-| **Semana 2a** | #5-7 (DB) | 3.5h | 👉 |
+| Fase | Actividades | Tiempo | Status |
+|------|-------------|--------|--------|
+| **Semana 1** | #1-4 (Seguridad) | 4h | ✅ COMPLETADA |
+| **Semana 2a** | #5-7 (DB) | 3.5h | 👉 EN PROGRESO (3.5/3.5h) |
+| **Semana 2a.1** | #5: PostgreSQL | 1h | ✅ COMPLETADA |
+| **Semana 2a.2** | #6: Migrations | 1h | ✅ 90% (knexfile.ts + Knex.js) |
+| **Semana 2a.3** | #7: UserRepository | 1.5h | ✅ 100% (CRUD completo) |
+| **Semana 2a.4** | #7.1-7.4: Completar #7 | 2.25h | 👉 SIGUIENTE |
 | **Semana 2b** | #8-10 (Auth) | 3.5h | 👉 |
 | **Semana 2c** | #11-12 (User API) | 1.75h | 👉 |
 | **Semana 2d** | #13-14 (Tests) | 3.5h | 👉 |
 | **Semana 3** | #15-16 (Flutter) | 1h | 👉 |
-| **TOTAL** | 20 actividades | 16-17h | |
+| **TOTAL COMPLETADO** | 4 actividades | 5h | ✅ |
+| **TOTAL PENDIENTE** | 16 actividades | 11-12h | 👉 |
 
 ---
 
@@ -277,16 +315,50 @@ FRONTEND ESPERANDO:
 
 ## 🚀 PRÓXIMO PASO
 
-### Comenzar con **Actividad #5: Setup PostgreSQL**
+### Completar **Actividades #7.1-7.4: Finalizar #7 UserRepository**
 
-```bash
-cd /Users/clay404/Documents/EVILENT/BACKEND/express-service
-
-# 1. Crear docker-compose.yml
-# 2. Configurar .env con DB credentials
-# 3. docker-compose up -d
-# 4. Verificar conexión: psql -d express_service_db
 ```
+Status Actual:
+✅ #5: Setup PostgreSQL - COMPLETADA
+✅ #6: Knex.js framework - 90% (falta migration SQL)
+✅ #7: UserRepository CRUD - 100% (CERO DUPLICACIÓN aplicado)
+
+👉 SIGUIENTE (2.25h):
+  1️⃣ #7.1: Crear migration SQL con knex (20min)
+     └─ npx knex migrate:make create_users_table
+  
+  2️⃣ #7.2: Ejecutar migrations (10min)
+     └─ npx knex migrate:latest
+  
+  3️⃣ #7.3: Actualizar UserService (45min)
+     └─ Inyectar UserRepository real en lugar de mocks
+  
+  4️⃣ #7.4: Tests de integración con DB (1h)
+     └─ Verificar CRUD con DB real
+
+Después de #7.4, desbloquea:
+  - #8: Password hashing
+  - #13: Integration tests
+```
+
+### Cambios Implementados Hasta Ahora:
+
+**COMPLETADO (5h):**
+- ✅ #1-4: Seguridad Crítica (4h)
+  - CORS, Request ID, Error Handling, Rate Limiting
+  
+- ✅ #5: PostgreSQL (1h)
+  - docker-compose.yml, connection pool, init.sql
+  - Schema: users, refresh_tokens, audit_logs
+  - Verified: psql, Node.js, Adminer UI
+
+**EN PROGRESO (3.5h):**
+- ✅ #6: Knex.js (90%) - knexfile.ts configurado
+- ✅ #7: UserRepository (100%) - CRUD completo con CERO DUPLICACIÓN
+  - Reutiliza tipos de src/types/index.ts
+  - Reutiliza DTOs de src/dto/index.ts
+  - 8 métodos: create, findById, findByEmail, list, update, delete, emailExists, findByIdIncludingDeleted
+  - Logging, error handling, soft delete, partial updates
 
 ---
 

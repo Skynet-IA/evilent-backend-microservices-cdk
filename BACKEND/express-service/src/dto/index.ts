@@ -86,25 +86,6 @@ export type PaginationInput = z.infer<typeof PaginationDTO>;
 // AUTH DTOs
 // ============================================================================
 
-export const LoginDTO = z.object({
-  email: z.string().email('Invalid email'),
-  password: z.string().min(6, 'Password must be at least 6 characters')
-});
-
-export type LoginInput = z.infer<typeof LoginDTO>;
-
-export const SignUpDTO = z.object({
-  firstName: z
-    .string()
-    .min(BUSINESS_LIMITS.USER.FIRST_NAME_MIN_LENGTH, 'First name is required'),
-  lastName: z
-    .string()
-    .min(BUSINESS_LIMITS.USER.LAST_NAME_MIN_LENGTH, 'Last name is required'),
-  email: z.string().email('Invalid email'),
-  password: z.string().min(6, 'Password must be at least 6 characters')
-});
-
-export type SignUpInput = z.infer<typeof SignUpDTO>;
 
 // ============================================================================
 // Utility function para extraer errores de Zod

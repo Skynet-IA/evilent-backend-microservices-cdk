@@ -7,8 +7,13 @@
  * - Logging estructurado
  */
 
+import * as dotenv from 'dotenv';
+import path from 'path';
 import { Pool, PoolClient } from 'pg';
 import logger from '../utility/logger';
+
+// Cargar .env.local para tests y desarrollo
+dotenv.config({ path: path.resolve(__dirname, '../../.env.local') });
 
 // ============================================================================
 // DATABASE CONFIGURATION
@@ -29,11 +34,11 @@ const getDatabaseConfig = (): DatabaseConfig => {
   const isTest = process.env.NODE_ENV === 'test';
   
   return {
-    host: isTest ? process.env.TEST_DB_HOST! : process.env.DB_HOST!,
-    port: parseInt(isTest ? process.env.TEST_DB_PORT! : process.env.DB_PORT!),
-    user: isTest ? process.env.TEST_DB_USER! : process.env.DB_USER!,
-    password: isTest ? process.env.TEST_DB_PASSWORD! : process.env.DB_PASSWORD!,
-    database: isTest ? process.env.TEST_DB_NAME! : process.env.DB_NAME!,
+    host: isTest ? (process.env.DB_TEST_HOST || 'localhost') : (process.env.DB_HOST || 'localhost'),
+    port: parseInt(isTest ? (process.env.DB_TEST_PORT || '5433') : (process.env.DB_PORT || '5432')),
+    user: isTest ? (process.env.DB_TEST_USER || 'evilent_test_user') : (process.env.DB_USER || 'evilent_user'),
+    password: isTest ? (process.env.DB_TEST_PASSWORD || 'test_password') : (process.env.DB_PASSWORD || 'secure_password_change_in_prod'),
+    database: isTest ? (process.env.DB_TEST_NAME || 'express_service_test_db') : (process.env.DB_NAME || 'express_service_db'),
     max: isTest ? 5 : 20, // Menos conexiones en test
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 2000,

@@ -14,6 +14,12 @@ import logger from '../utility/logger';
 
 export class UserRepository {
   /**
+   * Interfaz compatible con IUserRepository del servicio
+   * Permite que el servicio no dependa de la clase directamente
+   */
+  static findAll = UserRepository.list;
+
+  /**
    * Crear nuevo usuario
    * @param input - Datos del usuario (sin password_hash, se agrega en service)
    * @param passwordHash - Password hasheado (viene del service)
@@ -101,6 +107,7 @@ export class UserRepository {
       throw error;
     }
   }
+
 
   /**
    * Listar usuarios con paginación

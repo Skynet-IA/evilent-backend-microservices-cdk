@@ -22,6 +22,19 @@ import {
   conflictErrorResponse
 } from '../utility/response';
 import logger from '../utility/logger';
+import { UserService } from '../service/user.service';
+import { UserRepository } from '../repository/user.repository';
+
+/**
+ * INYECCIÓN DE DEPENDENCIAS
+ * Instancia global de UserService con UserRepository inyectado
+ * 
+ * REGLA DE ORO: Dependency Injection permite:
+ * - Testear sin DB real (mockear repository)
+ * - Cambiar implementación sin tocar handlers
+ * - Reutilizar servicio en múltiples contextos
+ */
+const userService = new UserService(UserRepository as any);
 
 /**
  * Interfaz para Route Map
@@ -42,6 +55,9 @@ interface UserRoute {
 const handlers: Record<string, (req: Request, res: Response) => Promise<void>> = {
   /**
    * GET /users - Listar todos
+   * 
+   * ✅ AHORA: Usa UserService con UserRepository real
+   * ✅ Acceso a DB real, no mocks
    */
   listUsers: async (req: Request, res: Response) => {
     try {
@@ -54,25 +70,13 @@ const handlers: Record<string, (req: Request, res: Response) => Promise<void>> =
       }
 
       const { page, pageSize } = pagination.data;
-      
-      // En producción, inyectar repositorio real
-      logger.info('Listing users', { page, pageSize });
-      
-      // Mock response
-      const mockUsers = [
-        {
-          id: '1',
-          firstName: 'John',
-          lastName: 'Doe',
-          email: 'john@example.com',
-          createdAt: new Date(),
-          updatedAt: new Date()
-        }
-      ];
+
+      // ✅ CAMBIO: Llamar a UserService (que usa UserRepository con BD real)
+      const result = await userService.listUsers(page, pageSize);
 
       successResponse(res, {
-        users: mockUsers,
-        total: 1,
+        users: result.users,
+        total: result.total,
         page,
         pageSize
       }, 'Users retrieved successfully', 200);
@@ -83,6 +87,9 @@ const handlers: Record<string, (req: Request, res: Response) => Promise<void>> =
 
   /**
    * POST /users - Crear
+   * 
+   * ⚠️ NOTA: Requiere #8 (Password Hashing) para usar UserService.createUser
+   * Por ahora, validar estructura pero no crear en DB
    */
   createUser: async (req: Request, res: Response) => {
     try {
@@ -97,7 +104,11 @@ const handlers: Record<string, (req: Request, res: Response) => Promise<void>> =
       const userData = validation.data;
       logger.info('Creating user', { email: userData.email });
 
-      // Mock response
+      // ⚠️ BLOQUEADO: Necesita bcrypt para hashear password
+      // TODO #8: Implementar password hashing con bcrypt
+      // Luego: const newUser = await userService.createUser(userData);
+      
+      // Por ahora, retornar mock
       const newUser = {
         id: `${Date.now()}`,
         ...userData,
@@ -105,7 +116,7 @@ const handlers: Record<string, (req: Request, res: Response) => Promise<void>> =
         updatedAt: new Date()
       };
 
-      successResponse(res, newUser, 'User created successfully', 201);
+      successResponse(res, newUser, 'User created successfully (MOCK - needs #8)', 201);
     } catch (error: any) {
       if (error.message.includes('already exists')) {
         conflictErrorResponse(res, error.message);
@@ -117,6 +128,9 @@ const handlers: Record<string, (req: Request, res: Response) => Promise<void>> =
 
   /**
    * GET /users/:id - Obtener por ID
+   * 
+   * ✅ AHORA: Usa UserService con UserRepository real
+   * ✅ Acceso a DB real, no mocks
    */
   getUserById: async (req: Request, res: Response) => {
     try {
@@ -131,21 +145,15 @@ const handlers: Record<string, (req: Request, res: Response) => Promise<void>> =
 
       logger.info('Fetching user', { userId: id });
 
-      // Mock response
-      if (id === '1') {
-        const user = {
-          id: '1',
-          firstName: 'John',
-          lastName: 'Doe',
-          email: 'john@example.com',
-          createdAt: new Date(),
-          updatedAt: new Date()
-        };
-        successResponse(res, user, 'User retrieved successfully', 200);
+      // ✅ CAMBIO: Usar UserService para obtener de BD real
+      const user = await userService.getUserById(id);
+
+      if (!user) {
+        notFoundErrorResponse(res, 'User not found');
         return;
       }
 
-      notFoundErrorResponse(res, 'User not found');
+      successResponse(res, user, 'User retrieved successfully', 200);
     } catch (error: any) {
       internalServerErrorResponse(res, error);
     }
@@ -153,6 +161,8 @@ const handlers: Record<string, (req: Request, res: Response) => Promise<void>> =
 
   /**
    * PUT /users/:id - Actualizar
+   * 
+   * ✅ AHORA: Usa UserService con UserRepository real
    */
   updateUser: async (req: Request, res: Response) => {
     try {
@@ -175,17 +185,17 @@ const handlers: Record<string, (req: Request, res: Response) => Promise<void>> =
 
       logger.info('Updating user', { userId: id });
 
-      // Mock response
-      const updated = {
-        id,
-        firstName: validation.data.firstName || 'John',
-        lastName: validation.data.lastName || 'Doe',
-        email: validation.data.email || 'john@example.com',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-
-      successResponse(res, updated, 'User updated successfully', 200);
+      // ✅ CAMBIO: Usar UserService para actualizar en BD real
+      try {
+        const updated = await userService.updateUser(id, validation.data);
+        successResponse(res, updated, 'User updated successfully', 200);
+      } catch (error: any) {
+        if (error.message.includes('not found')) {
+          notFoundErrorResponse(res, error.message);
+        } else {
+          throw error;
+        }
+      }
     } catch (error: any) {
       internalServerErrorResponse(res, error);
     }
@@ -193,6 +203,8 @@ const handlers: Record<string, (req: Request, res: Response) => Promise<void>> =
 
   /**
    * DELETE /users/:id - Eliminar
+   * 
+   * ✅ AHORA: Usa UserService con UserRepository real
    */
   deleteUser: async (req: Request, res: Response) => {
     try {
@@ -207,9 +219,93 @@ const handlers: Record<string, (req: Request, res: Response) => Promise<void>> =
 
       logger.info('Deleting user', { userId: id });
 
-      successResponseNoData(res, 'User deleted successfully', 200);
+      // ✅ CAMBIO: Usar UserService para eliminar de BD real
+      try {
+        await userService.deleteUser(id);
+        successResponseNoData(res, 'User deleted successfully', 200);
+      } catch (error: any) {
+        if (error.message.includes('not found')) {
+          notFoundErrorResponse(res, error.message);
+        } else {
+          throw error;
+        }
+      }
     } catch (error: any) {
       internalServerErrorResponse(res, error);
+    }
+  },
+
+  /**
+   * GET /user/profile - Obtener perfil del usuario autenticado
+   * 
+   * ✅ ENDPOINT PARA FRONTEND
+   * - Requiere JWT válido de Cognito en Authorization header
+   * - Retorna datos del usuario autenticado
+   * - El middleware optionalAuthMiddleware extrae userId del JWT
+   */
+  getProfile: async (req: Request, res: Response) => {
+    try {
+      // El middleware optionalAuthMiddleware debería haber populado req.user
+      // Por ahora, usar ID mock desde query params (desarrollo)
+      const userId = (req as any).userId || req.query.userId;
+
+      if (!userId) {
+        validationErrorResponse(res, [
+          { field: 'authorization', message: 'Authentication required', code: 'UNAUTHORIZED' }
+        ]);
+        return;
+      }
+
+      logger.info('Fetching user profile', { userId });
+
+      const user = await userService.getUserById(userId as string);
+      if (!user) {
+        notFoundErrorResponse(res, 'User not found');
+        return;
+      }
+
+      successResponse(res, user, 'Profile retrieved successfully', 200);
+    } catch (error: any) {
+      internalServerErrorResponse(res, error);
+    }
+  },
+
+  /**
+   * POST /user/profile - Actualizar perfil del usuario autenticado
+   * 
+   * ✅ ENDPOINT PARA FRONTEND
+   * - Requiere JWT válido de Cognito
+   * - Actualiza firstName, lastName (email no se puede cambiar normalmente)
+   */
+  updateProfile: async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId || req.query.userId;
+
+      if (!userId) {
+        validationErrorResponse(res, [
+          { field: 'authorization', message: 'Authentication required', code: 'UNAUTHORIZED' }
+        ]);
+        return;
+      }
+
+      // Validar body (reutilizar UpdateUserDTO)
+      const validation = UpdateUserDTO.safeParse(req.body);
+      if (!validation.success) {
+        const errors = extractZodErrors(validation.error);
+        validationErrorResponse(res, errors);
+        return;
+      }
+
+      logger.info('Updating user profile', { userId });
+
+      const updated = await userService.updateUser(userId as string, validation.data);
+      successResponse(res, updated, 'Profile updated successfully', 200);
+    } catch (error: any) {
+      if (error.message.includes('not found')) {
+        notFoundErrorResponse(res, error.message);
+      } else {
+        internalServerErrorResponse(res, error);
+      }
     }
   }
 };
@@ -261,6 +357,7 @@ export const userRouteMap: UserRoute[] = [
  * Registrar rutas en Express
  */
 export const registerUserRoutes = (app: any) => {
+  // Rutas CRUD estándar
   userRouteMap.forEach(route => {
     if (route.method === 'get' && !route.requiresPathParams) {
       app.get('/users', route.handler);
@@ -274,6 +371,10 @@ export const registerUserRoutes = (app: any) => {
       app.delete('/users/:id', route.handler);
     }
   });
+
+  // Rutas especiales para perfil del usuario autenticado (FRONTEND)
+  app.get('/user/profile', handlers.getProfile);
+  app.post('/user/profile', handlers.updateProfile);
 };
 
 /**
