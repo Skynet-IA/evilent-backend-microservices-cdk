@@ -113,6 +113,7 @@ app.get('/info', (_req: Request, res: Response) => {
  * Registrar rutas de usuarios
  */
 registerUserRoutes(app);
+
 // ============================================================================
 // ERROR HANDLING
 // ============================================================================

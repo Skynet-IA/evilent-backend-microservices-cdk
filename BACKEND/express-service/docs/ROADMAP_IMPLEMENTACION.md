@@ -229,10 +229,11 @@ FRONTEND ESPERANDO:
 └─ #7.4: Tests de integración (1h)
    TOTAL: 2.25h
 
-👉 SIGUIENTE (Semana 2 - Part 2):
-├─ #8: Password hashing (depende #7) - 1h
-├─ #9: Login/Signup endpoints (depende #8) - 1.5h
-└─ #10: Token refresh (depende #9) - 1h
+✅ COMPLETADO REFACTORIZADO (Semana 2 - Part 2):
+├─ #8-10: APPROACH CORREGIDO - Eliminar código especulativo (bcrypt, auth local)
+├─ ✅ Crear GET /user/profile (obtener perfil autenticado)
+├─ ✅ Crear POST /user/profile (actualizar perfil autenticado)
+└─ RAZÓN: Frontend usa Cognito + Amplify (no auth local en backend)
 
 👉 SIGUIENTE (Semana 2 - Part 3):
 ├─ #11: GET /user/profile (depende #10) - 45min
