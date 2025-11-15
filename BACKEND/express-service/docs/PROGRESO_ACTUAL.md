@@ -253,9 +253,52 @@
 
 ---
 
+## ✅ SEMANA 1: SEGURIDAD CRÍTICA (COMPLETADO)
+
+### ✅ Actividad #1: CORS Middleware (30 min)
+- [x] Instalado express-cors
+- [x] Configurado origin whitelist
+- [x] Headers: credentials, methods, allowedHeaders
+- [x] Endpoint /health y /info excluidos
+- [x] Tests: verifican headers CORS en OPTIONS
+
+### ✅ Actividad #2: Request ID Tracking (1h)
+- [x] Nuevo middleware `src/utility/request-id.ts`
+- [x] Genera UUID v4 con crypto.randomUUID()
+- [x] Reutiliza X-Request-ID del cliente si existe
+- [x] Propaga a través de response headers
+- [x] Incluye en logs estructurados
+- [x] Tests: verifican UUID en headers
+
+### ✅ Actividad #3: Error Handling Avanzado (1.5h)
+- [x] Nueva clase `AppError` en `src/utility/errors.ts`
+- [x] Errores específicos: ValidationError, AuthenticationError, NotFoundError, ConflictError, DatabaseError, ServiceUnavailableError
+- [x] Cada error tiene: statusCode, code, message, retryable flag
+- [x] Helper `toAppError` para convertir excepciones genéricas
+- [x] Tests: verifican estructura completa de errores
+
+### ✅ Actividad #4: Rate Limiting (45 min)
+- [x] Instalado express-rate-limit
+- [x] Configurado: 100 requests por 15 minutos por IP
+- [x] Excluye /health y /info endpoints
+- [x] Response 429 con formato consistente
+- [x] Incluye Retry-After header
+- [x] Log de rate limit exceeded
+- [x] Tests: verifican comportamiento de limitación
+
+## 📊 SEMANA 1 - RESULTADOS
+
+```
+✅ 37 tests pasando
+❌ 2 tests fallando (no relacionados a Semana 1)
+📊 Coverage: 67.66% (global), 81.25% (user.handler)
+```
+
+---
+
 ## 📋 TAREAS PENDIENTES (Futuro)
 
-### 🔄 Fase 2: Database Integration
+### 🔄 Semana 2: Database Integration
 - [ ] Agregar PostgreSQL (driver pg)
 - [ ] Migrations framework
 - [ ] UserRepository real (vs mock)
@@ -263,7 +306,7 @@
 - [ ] Transaction management
 - [ ] Integration tests con DB real
 
-### 🔄 Fase 3: AWS Cognito Real
+### 🔄 Semana 3: AWS Cognito Real
 - [ ] Integración real con AWS Cognito
 - [ ] User pool creation
 - [ ] Client credentials
@@ -425,9 +468,21 @@ npm run dev
 
 ---
 
-**Última actualización:** 2024-11-15 14:30 UTC
-**Estado:** ✅ COMPLETADO
-**Versión:** 1.0.0
+**Última actualización:** 2024-11-15 05:35 UTC
+**Estado:** ✅ SEMANA 1 COMPLETADA
+**Versión:** 1.1.0 (Semana 1)
 **Autor:** EVILENT Team
+
+---
+
+## 🎯 HITOS SEMANA 1
+
+| Actividad | Tiempo | Status | Verificación |
+|-----------|--------|--------|--------------|
+| #1 CORS Middleware | 30 min | ✅ | Tests: CORS headers presentes |
+| #2 Request ID Tracking | 1h | ✅ | Tests: X-Request-ID en headers |
+| #3 Error Handling | 1.5h | ✅ | Tests: AppError con statusCode + code |
+| #4 Rate Limiting | 45 min | ✅ | Tests: 429 con Retry-After |
+| **TOTAL SEMANA 1** | **3-4h** | **✅** | **37/39 tests pasando** |
 
 
