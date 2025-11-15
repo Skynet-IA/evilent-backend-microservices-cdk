@@ -123,6 +123,7 @@ export const notFoundErrorResponse = (
   return res.status(HTTP_STATUS.NOT_FOUND).json({
     success: false,
     message,
+    code: 'NOT_FOUND_ERROR',
     data: null,
     timestamp: new Date().toISOString()
   });

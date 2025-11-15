@@ -6,8 +6,11 @@
  */
 
 import express, { Request, Response, NextFunction } from 'express';
+import cors from 'cors';
+import rateLimit from 'express-rate-limit';
 import { SERVICE_CONFIG, PORT, SERVICE_NAME } from '../config/constants';
 import logger from '../utility/logger';
+import { requestIdMiddleware } from '../utility/request-id';
 import { optionalAuthMiddleware } from '../auth/jwt-auth';
 import { registerUserRoutes, logAvailableRoutes } from '../api/user.handler';
 import { internalServerErrorResponse } from '../utility/response';
@@ -19,13 +22,26 @@ const app = express();
 // MIDDLEWARE GLOBAL
 // ============================================================================
 
+// CORS Configuration (ACTIVIDAD #1)
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 200
+}));
+
 // Parse JSON bodies
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Request logging middleware
+// Request ID Tracking (ACTIVIDAD #2)
+app.use(requestIdMiddleware);
+
+// Legacy request logging middleware (kept for compatibility)
 app.use((req: Request, _res: Response, next: NextFunction) => {
   logger.info('Incoming request', {
+    requestId: req.id,
     method: req.method,
     path: req.path,
     timestamp: new Date().toISOString()
@@ -35,6 +51,35 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
 
 // Optional auth middleware
 app.use(optionalAuthMiddleware);
+
+// Rate Limiting (ACTIVIDAD #4)
+const rateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 100, // máximo 100 requests por IP
+  message: 'Too many requests from this IP, please try again later.',
+  standardHeaders: true, // Retorna info en `RateLimit-*` headers
+  legacyHeaders: false, // Deshabilita `X-RateLimit-*` headers
+  skip: (req: Request) => {
+    // Saltar rate limiting para health checks
+    return req.path === '/health' || req.path === '/info';
+  },
+  handler: (req: Request, res: Response) => {
+    logger.warn('Rate limit exceeded', {
+      requestId: req.id,
+      ip: req.ip,
+      path: req.path,
+      timestamp: new Date().toISOString()
+    });
+    res.status(429).json({
+      success: false,
+      message: 'Too many requests',
+      code: 'RATE_LIMIT_EXCEEDED',
+      retryAfter: res.getHeader('Retry-After')
+    });
+  }
+});
+
+app.use(rateLimiter);
 
 // ============================================================================
 // ROUTES

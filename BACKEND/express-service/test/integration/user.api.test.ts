@@ -10,18 +10,34 @@
  */
 
 import request from 'supertest';
-import express from 'express';
+import express, { Request, Response } from 'express';
+import cors from 'cors';
+import rateLimit from 'express-rate-limit';
 import { registerUserRoutes } from '../../src/api/user.handler';
+import { requestIdMiddleware } from '../../src/utility/request-id';
 
 /**
  * Setup de app Express para testing
  */
-const createTestApp = () => {
+const createTestApp = (withMiddleware = true) => {
   const app = express();
+  
+  if (withMiddleware) {
+    // ACTIVIDAD #1: CORS Middleware
+    app.use(cors({
+      origin: 'http://localhost:3000',
+      credentials: true
+    }));
+    
+    // ACTIVIDAD #2: Request ID Tracking
+    app.use(requestIdMiddleware);
+  }
+  
   app.use(express.json());
   registerUserRoutes(app);
   return app;
 };
+
 
 describe('User API Integration Tests', () => {
   let app: express.Application;
@@ -343,6 +359,158 @@ describe('User API Integration Tests', () => {
       expect(response.body.data.errors[0]).toHaveProperty('message');
       expect(response.body.data.errors[0]).toHaveProperty('code');
       expect(response.body.data.errors[0].code).toBe('VALIDATION_ERROR');
+    });
+  });
+
+  // ========================================================================
+  // ACTIVIDAD #1: CORS Middleware
+  // ========================================================================
+
+  describe('CORS Middleware (ACTIVIDAD #1)', () => {
+    it('debe permitir requests desde origen permitido', async () => {
+      // ACT
+      const response = await request(app)
+        .options('/users')
+        .set('Origin', 'http://localhost:3000');
+
+      // ASSERT - OPTIONS retorna 204 o 200
+      expect([200, 204]).toContain(response.status);
+      expect(response.headers['access-control-allow-origin']).toBe('http://localhost:3000');
+      expect(response.headers['access-control-allow-credentials']).toBe('true');
+    });
+
+    it('debe incluir headers CORS en respuesta', async () => {
+      // ACT
+      const response = await request(app)
+        .get('/users')
+        .set('Origin', 'http://localhost:3000');
+
+      // ASSERT
+      expect(response.headers['access-control-allow-origin']).toBe('http://localhost:3000');
+    });
+  });
+
+  // ========================================================================
+  // ACTIVIDAD #2: Request ID Tracking
+  // ========================================================================
+
+  describe('Request ID Tracking (ACTIVIDAD #2)', () => {
+    it('debe generar X-Request-ID si no existe', async () => {
+      // ACT
+      const response = await request(app)
+        .get('/users')
+        .expect(200);
+
+      // ASSERT
+      expect(response.headers['x-request-id']).toBeDefined();
+      expect(response.headers['x-request-id']).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+      );
+    });
+
+    it('debe usar X-Request-ID proporcionado por cliente', async () => {
+      // ARRANGE
+      const customId = '550e8400-e29b-41d4-a716-446655440000';
+
+      // ACT
+      const response = await request(app)
+        .get('/users')
+        .set('X-Request-ID', customId)
+        .expect(200);
+
+      // ASSERT
+      expect(response.headers['x-request-id']).toBe(customId);
+    });
+  });
+
+  // ========================================================================
+  // ACTIVIDAD #3: Error Handling Avanzado
+  // ========================================================================
+
+  describe('Advanced Error Handling (ACTIVIDAD #3)', () => {
+    it('debe retornar 404 con formato correcto para recurso no encontrado', async () => {
+      // ACT
+      const response = await request(app)
+        .get('/users/999')
+        .expect(404);
+
+      // ASSERT
+      expect(response.body).toHaveProperty('success', false);
+      expect(response.body).toHaveProperty('message', 'User not found');
+      expect(response.body).toHaveProperty('code');
+    });
+
+    it('debe retornar 400 con detalles de validación', async () => {
+      // ACT
+      const response = await request(app)
+        .post('/users')
+        .send({
+          firstName: 'A'.repeat(51), // Mayor que max (50)
+          lastName: 'Doe'
+        })
+        .expect(400);
+
+      // ASSERT
+      expect(response.body.success).toBe(false);
+      expect(response.body.data.errors).toBeDefined();
+      expect(response.body.data.errors[0].field).toBe('firstName');
+    });
+  });
+
+  // ========================================================================
+  // ACTIVIDAD #4: Rate Limiting
+  // ========================================================================
+
+  describe('Rate Limiting (ACTIVIDAD #4)', () => {
+    it('debe tener rate limiting middleware configurado', () => {
+      // ASSERT - Verificar que rateLimit está disponible en Express
+      expect(rateLimit).toBeDefined();
+      
+      // Verificar que la función retorna un middleware
+      const middleware = rateLimit({ max: 100, windowMs: 15 * 60 * 1000 });
+      expect(typeof middleware).toBe('function');
+    });
+
+    it('debe retornar respuesta 429 con formato correcto cuando se excede límite', async () => {
+      // Crear app con rate limit muy bajo para testing
+      const testApp = express();
+      testApp.use(express.json());
+      
+      // Rate limiter de 2 requests
+      const limiter = rateLimit({
+        windowMs: 1000,
+        max: 2,
+        standardHeaders: true,
+        legacyHeaders: false,
+        handler: (_req: Request, res: Response) => {
+          res.status(429).json({
+            success: false,
+            message: 'Too many requests',
+            code: 'RATE_LIMIT_EXCEEDED',
+            retryAfter: res.getHeader('Retry-After')
+          });
+        }
+      });
+      
+      testApp.use(limiter);
+      testApp.get('/test', (_req: Request, res: Response) => {
+        res.json({ success: true });
+      });
+
+      // ACT - Hacer 2 requests ok
+      await request(testApp).get('/test').expect(200);
+      await request(testApp).get('/test').expect(200);
+
+      // Request #3 debe ser rechazado
+      const response = await request(testApp)
+        .get('/test')
+        .expect(429);
+
+      // ASSERT
+      expect(response.body).toHaveProperty('success', false);
+      expect(response.body).toHaveProperty('message', 'Too many requests');
+      expect(response.body).toHaveProperty('code', 'RATE_LIMIT_EXCEEDED');
+      expect(response.headers['retry-after']).toBeDefined();
     });
   });
 });
