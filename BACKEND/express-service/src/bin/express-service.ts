@@ -1,9 +1,23 @@
 /**
  * Express Service - Entry Point
- * 
+ *
  * Punto de entrada de la aplicación
  * Setup de Express, middleware, rutas
  */
+
+// ============================================================================
+// 🔧 CARGAR VARIABLES DE ENTORNO (PRIMERO)
+// ============================================================================
+import * as dotenv from 'dotenv';
+import path from 'path';
+
+dotenv.config({ path: path.resolve(__dirname, '../../.env.local') });
+
+// ============================================================================
+// 🔐 VALIDACIÓN DE CONFIGURACIÓN (FAIL-FAST)
+// ============================================================================
+// IMPORTAR DESPUÉS: Valida configuración ANTES de inicializar cualquier módulo
+import '../config/validated-constants';
 
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
