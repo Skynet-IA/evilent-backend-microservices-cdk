@@ -47,18 +47,19 @@
 import { Request, Response, NextFunction } from 'express';
 import { logger } from '../../utility/logger';
 import { CognitoVerifierService } from '../../auth/cognito-verifier';
-import { AppError } from '../../utility/errors';
 
 /**
- * 🔑 Extend Express Request con usuario autenticado
+ * 🔑 Extend Express Request con usuario autenticado y request ID
  *
  * Permite que los handlers accedan a:
- * • req.user.userId
- * • req.user.userEmail
+ * • req.id - ID único del request (propagado por request-id.middleware)
+ * • req.user.userId - ID del usuario autenticado
+ * • req.user.userEmail - Email del usuario autenticado
  */
 declare global {
   namespace Express {
     interface Request {
+      id?: string; // Request ID único (generado por request-id.middleware)
       user?: {
         userId: string;
         userEmail: string;
@@ -106,7 +107,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
 
   if (!authHeader) {
     logger.warn('Unauthorized access attempt: No Authorization header', {
-      requestId: (req as any).id,
+      requestId: req.id,
       path: req.path,
       method: req.method,
     });
@@ -126,7 +127,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
 
   if (parts.length !== 2 || parts[0] !== 'Bearer') {
     logger.warn('Unauthorized access attempt: Invalid Bearer format', {
-      requestId: (req as any).id,
+      requestId: req.id,
       path: req.path,
       method: req.method,
       authFormat: parts[0],
@@ -156,7 +157,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
       };
 
       logger.info('User authenticated successfully', {
-        requestId: (req as any).id,
+        requestId: req.id,
         userId: req.user.userId,
         path: req.path,
         method: req.method,
@@ -169,7 +170,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
       // ❌ TOKEN INVÁLIDO - Retornar 401
 
       logger.warn('Token verification failed', {
-        requestId: (req as any).id,
+        requestId: req.id,
         path: req.path,
         method: req.method,
         error: error instanceof Error ? error.message : String(error),
@@ -218,7 +219,7 @@ export function optionalAuth(req: Request, res: Response, next: NextFunction): v
   // Si formato es incorrecto, simplemente continuar sin usuario
   if (parts.length !== 2 || parts[0] !== 'Bearer') {
     logger.debug('Invalid Authorization format in optional auth, skipping', {
-      requestId: (req as any).id,
+      requestId: req.id,
       path: req.path,
     });
     next();
@@ -237,7 +238,7 @@ export function optionalAuth(req: Request, res: Response, next: NextFunction): v
       };
 
       logger.debug('Optional auth: User authenticated', {
-        requestId: (req as any).id,
+        requestId: req.id,
         userId: req.user.userId,
       });
 
@@ -246,7 +247,7 @@ export function optionalAuth(req: Request, res: Response, next: NextFunction): v
     .catch((error) => {
       // No fallar, simplemente no agregar usuario
       logger.debug('Optional auth: Token verification failed, continuing without user', {
-        requestId: (req as any).id,
+        requestId: req.id,
         error: error instanceof Error ? error.message : String(error),
       });
 
