@@ -24,8 +24,8 @@ import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import { SERVICE_CONFIG, PORT, SERVICE_NAME } from '../config/constants';
 import logger from '../utility/logger';
-import { requestIdMiddleware } from '../utility/request-id';
-import { cognitoAuthMiddleware } from '../auth/cognito-middleware';
+import { requestIdMiddleware } from '../api/middleware';
+import { requireAuth } from '../api/middleware';
 import { registerUserRoutes, logAvailableRoutes } from '../api/user.handler';
 import { internalServerErrorResponse } from '../utility/response';
 
@@ -63,9 +63,9 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
   next();
 });
 
-// Optional auth middleware
-// Cognito Authentication Middleware (REGLA #6: Defense in depth)
-app.use(cognitoAuthMiddleware);
+// ✅ NOTA: Auth middleware NO es global
+// Aplicar SOLO en rutas que lo necesiten (ver registerUserRoutes)
+// Esto permite rutas públicas sin autenticación
 
 // Rate Limiting (ACTIVIDAD #4)
 const rateLimiter = rateLimit({
