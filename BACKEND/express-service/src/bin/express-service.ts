@@ -25,8 +25,7 @@ import rateLimit from 'express-rate-limit';
 import { SERVICE_CONFIG, PORT, SERVICE_NAME } from '../config/constants';
 import logger from '../utility/logger';
 import { requestIdMiddleware } from '../api/middleware';
-import { requireAuth } from '../api/middleware';
-import { registerUserRoutes, logAvailableRoutes } from '../api/user.handler';
+import { registerUserRoutes, logAvailableRoutes } from '../api/handlers/user.handler';
 import { internalServerErrorResponse } from '../utility/response';
 
 // Crear aplicación Express

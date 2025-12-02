@@ -245,8 +245,8 @@ const handlers: Record<string, (req: Request, res: Response) => Promise<void>> =
    */
   getProfile: async (req: Request, res: Response) => {
     try {
-      // El middleware cognitoAuthMiddleware debería haber populado req.userId
-      const userId = req.userId || req.query.userId;
+      // El middleware requireAuth debería haber populado req.user
+      const userId = req.user?.userId || (req.query.userId as string);
 
       if (!userId) {
         validationErrorResponse(res, [

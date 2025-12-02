@@ -45,7 +45,7 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import { logger } from '../../utility/logger';
+import logger from '../../utility/logger';
 import { CognitoVerifierService } from '../../auth/cognito-verifier';
 
 /**
@@ -205,7 +205,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
  *
  * @returns void - Siempre continúa (next()), con o sin usuario
  */
-export function optionalAuth(req: Request, res: Response, next: NextFunction): void {
+export function optionalAuth(req: Request, _res: Response, next: NextFunction): void {
   const authHeader = req.header('Authorization');
 
   // Si no hay Authorization header, simplemente continuar sin usuario
