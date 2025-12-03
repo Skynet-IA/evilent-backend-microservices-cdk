@@ -764,20 +764,27 @@ describe('User Handler', () => {
       // ACT
       await handlers.getProfile(mockReq, mockRes);
 
-      // ASSERT: Verificar que pickFields() se aplicó
+      // ASSERT: Verificar que pickFields() se aplicó correctamente
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({
+          success: true,
+          message: expect.any(String),
+          data: {
             id: 'user-123',
-            email: expect.any(String)
-          }),
-          // No debe incluir createdAt, updatedAt
-          data: expect.not.objectContaining({
-            createdAt: expect.anything(),
-            updatedAt: expect.anything()
-          })
+            email: expect.any(String),
+            firstName: expect.any(String),
+            lastName: expect.any(String)
+            // NO debe incluir: createdAt, updatedAt, password, etc.
+          },
+          timestamp: expect.any(String)
         })
       );
+      
+      // Validación adicional: Verificar que campos sensibles NO están presentes
+      const callArgs = mockRes.json.mock.calls[0][0];
+      expect(callArgs.data).not.toHaveProperty('createdAt');
+      expect(callArgs.data).not.toHaveProperty('updatedAt');
+      expect(callArgs.data).not.toHaveProperty('password');
     });
   });
 });
@@ -894,6 +901,106 @@ describe('CRUD Flow E2E', () => {
 │ DTO/Validators      │ >80%    │ 0%       │ +80% (CRIT) │
 │ TOTAL               │ >80%    │ 0%       │ +80% (CRIT) │
 └─────────────────────┴─────────┴──────────┴─────────────┘
+```
+
+---
+
+## 🚨 ANTIPATRONES COMUNES EN TESTS (EVITAR)
+
+### ❌ Antipatrón #1: Duplicate keys en expect.objectContaining()
+
+```typescript
+// ❌ INCORRECTO: Segunda key "data" sobrescribe la primera
+expect(mockRes.json).toHaveBeenCalledWith(
+  expect.objectContaining({
+    data: expect.objectContaining({         // Primera "data"
+      id: 'user-123',
+      email: expect.any(String)
+    }),
+    data: expect.not.objectContaining({     // ← Segunda "data" sobrescribe
+      createdAt: expect.anything(),
+      updatedAt: expect.anything()
+    })
+  })
+);
+// RESULTADO: Test NUNCA valida que createdAt/updatedAt están excluidos
+
+// ✅ CORRECTO: Validar estructura COMPLETA en un solo expect
+expect(mockRes.json).toHaveBeenCalledWith(
+  expect.objectContaining({
+    success: true,
+    data: {
+      id: 'user-123',
+      email: expect.any(String),
+      firstName: expect.any(String)
+      // NO incluye createdAt, updatedAt
+    }
+  })
+);
+
+// ✅ Validación adicional: Verificar EXPLÍCITAMENTE que NO están
+const callArgs = mockRes.json.mock.calls[0][0];
+expect(callArgs.data).not.toHaveProperty('createdAt');
+expect(callArgs.data).not.toHaveProperty('updatedAt');
+```
+
+### ❌ Antipatrón #2: Mocks con estructura simplificada
+
+```typescript
+// ❌ INCORRECTO: Mock no refleja BD real
+mockUserService.getUserById.mockResolvedValue({
+  id: '123',
+  name: 'Test'
+});
+
+// ✅ CORRECTO: Mock con estructura exacta de BD
+mockUserService.getUserById.mockResolvedValue({
+  id: 'user-123',
+  email: 'test@example.com',
+  first_name: 'Test',        // ← DB field (snake_case)
+  last_name: 'User',         // ← DB field (snake_case)
+  created_at: '2024-01-01T12:00:00Z',
+  updated_at: '2024-01-01T12:00:00Z'
+});
+```
+
+### ❌ Antipatrón #3: Tests sin edge cases
+
+```typescript
+// ❌ INCORRECTO: Solo happy path
+it('debe retornar usuario', async () => {
+  mockRepository.findById.mockResolvedValue(dbUser);
+  const result = await service.getUserById('user-123');
+  expect(result).toBeDefined();
+});
+
+// ✅ CORRECTO: Happy path + Error path + Edge cases
+describe('getUserById', () => {
+  it('debe retornar usuario con datos válidos', async () => {
+    mockRepository.findById.mockResolvedValue(dbUser);
+    const result = await service.getUserById('user-123');
+    expect(result.id).toBe('user-123');
+  });
+  
+  it('debe lanzar error si usuario no existe', async () => {
+    mockRepository.findById.mockResolvedValue(null);
+    await expect(() =>
+      service.getUserById('nonexistent')
+    ).rejects.toThrow('User not found');
+  });
+  
+  it('debe manejar IDs vacíos', async () => {
+    await expect(() =>
+      service.getUserById('')
+    ).rejects.toThrow('User ID is required');
+  });
+  
+  it('debe manejar IDs con caracteres inválidos', async () => {
+    await expect(() =>
+      service.getUserById('invalid@#$')
+    ).rejects.toThrow();
+  });
+});
 ```
 
 ---
