@@ -422,14 +422,14 @@ describe('UserService', () => {
       mockRepository.findById.mockResolvedValue(null);
 
       // ACT & ASSERT
-      await expect(() =>
+      await expect(
         userService.getUserById('nonexistent')
       ).rejects.toThrow('User not found');
     });
 
     it('debe manejar IDs vacíos', async () => {
       // ARRANGE & ACT & ASSERT
-      await expect(() =>
+      await expect(
         userService.getUserById('')
       ).rejects.toThrow('User ID is required');
     });
@@ -462,7 +462,7 @@ describe('UserService', () => {
       const invalidUpdate = { firstName: '' };
 
       // ACT & ASSERT
-      await expect(() =>
+      await expect(
         userService.updateUser('user-123', invalidUpdate)
       ).rejects.toThrow();
     });
@@ -984,23 +984,64 @@ describe('getUserById', () => {
   
   it('debe lanzar error si usuario no existe', async () => {
     mockRepository.findById.mockResolvedValue(null);
-    await expect(() =>
+    await expect(
       service.getUserById('nonexistent')
     ).rejects.toThrow('User not found');
   });
   
   it('debe manejar IDs vacíos', async () => {
-    await expect(() =>
+    await expect(
       service.getUserById('')
     ).rejects.toThrow('User ID is required');
   });
   
   it('debe manejar IDs con caracteres inválidos', async () => {
-    await expect(() =>
+    await expect(
       service.getUserById('invalid@#$')
     ).rejects.toThrow();
   });
 });
+```
+
+### ❌ Antipatrón #4: Sintaxis INCORRECTA para testing async functions que rechazan
+
+```typescript
+// ❌ INCORRECTO: Wrapping en arrow function
+await expect(() => asyncFunction()).rejects.toThrow();
+// RESULTADO: Error en runtime - 'rejects' espera una Promise, no una función
+
+// ✅ CORRECTO: Pasar Promise directamente
+await expect(asyncFunction()).rejects.toThrow();
+
+// ✅ CORRECTO: Para sync functions que lanzan errores
+expect(() => syncFunction()).toThrow();
+
+// REGLA SIMPLE:
+// - async function que rechaza → expect(promise).rejects.toThrow()
+// - sync function que lanza error → expect(() => function()).toThrow()
+// - NUNCA mezclar: expect(() => asyncFunction()).rejects.toThrow() ← INCORRECTO
+
+// EJEMPLOS REALES CORRECTOS:
+
+// 1. Testing async service que rechaza
+await expect(
+  userService.getUserById('nonexistent')
+).rejects.toThrow('User not found');
+
+// 2. Testing async repository que rechaza
+await expect(
+  repository.findById(null)
+).rejects.toThrow();
+
+// 3. Testing sync helper que lanza error
+expect(() => 
+  parseJSON('invalid json')
+).toThrow();
+
+// 4. Testing validación Zod que rechaza (async)
+await expect(
+  schema.parseAsync(invalidData)
+).rejects.toThrow();
 ```
 
 ---
