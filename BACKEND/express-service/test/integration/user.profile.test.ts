@@ -15,7 +15,7 @@ import request from 'supertest';
 import express from 'express';
 import { query } from '../../src/db/connection';
 import { registerUserRoutes } from '../../src/api/handlers/user.handler';
-import { requestIdMiddleware } from '../../src/utility/request-id';
+import { requestIdMiddleware } from '../../src/api/middleware';
 
 /**
  * Setup app para testing

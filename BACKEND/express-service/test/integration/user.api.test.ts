@@ -14,7 +14,7 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import { registerUserRoutes } from '../../src/api/handlers/user.handler';
-import { requestIdMiddleware } from '../../src/utility/request-id';
+import { requestIdMiddleware } from '../../src/api/middleware';
 
 /**
  * Setup de app Express para testing

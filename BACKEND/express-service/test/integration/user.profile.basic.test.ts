@@ -12,7 +12,7 @@ import express from 'express';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import { registerUserRoutes } from '../../src/api/handlers/user.handler';
-import { requestIdMiddleware } from '../../src/utility/request-id';
+import { requestIdMiddleware } from '../../src/api/middleware';
 
 /**
  * Setup app para testing (con todos los middlewares)
