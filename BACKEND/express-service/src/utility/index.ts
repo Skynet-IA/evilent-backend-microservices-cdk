@@ -12,12 +12,16 @@ export { errorResponse, type ApiError } from './response';
 
 export { default as logger } from './logger';
 
-export { validateWithZod, parseWithZod, safeParseWithZod, formatZodErrors } from './zod-validator';
+export { validateWithZod, parseWithZod, safeParseWithZod, formatZodErrors as formatZodErrorsValidator } from './zod-validator';
 export { type ValidationError, type ZodValidationResult } from './zod-validator';
 
 export { parseAndValidateBody, parseAndValidatePathParams, parseAndValidateQueryParams } from './request-parser';
 export { validationSuccessResponse } from './request-parser';
 export { type ValidationErrorResponse, type ParseResult } from './request-parser';
+
+export { formatUser, buildSuccessResponse, extractZodErrors, generateRandomProfile } from './helpers';
+export { formatUsers, sanitizeString, toCamelCase, pickFields } from './helpers';
+export { type FormattedUser } from './helpers';
 
 export { AppError, ValidationError as AppValidationError, NotFoundError } from './errors';
 
