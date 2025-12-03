@@ -3,6 +3,8 @@
  * 
  * PATRÓN ESCALABLE: Route Map
  * REGLA PLATINO: No usar switch/if largos, usar configuración declarativa
+ * REGLA #5: Validación centralizada con parseAndValidate*
+ * REGLA #3: Logger estructurado en todas las operaciones
  * 
  * Beneficio:
  * - Agregar ruta = agregar objeto al array
@@ -12,18 +14,26 @@
  */
 
 import { Request, Response } from 'express';
-import { extractZodErrors, CreateUserDTO, UpdateUserDTO, PaginationDTO } from '../../dto';
+import { CreateUserDTO, UpdateUserDTO, PaginationDTO } from '../../dto';
 import {
-  successResponse,
-  successResponseNoData,
-  validationErrorResponse,
   notFoundErrorResponse,
   internalServerErrorResponse,
   conflictErrorResponse
 } from '../../utility/response';
+import {
+  parseAndValidateQueryParams,
+  parseAndValidateBody,
+} from '../../utility/request-parser';
+import {
+  formatUser,
+  buildSuccessResponse,
+  formatUsers,
+  pickFields
+} from '../../utility/helpers';
 import logger from '../../utility/logger';
 import { UserService } from '../../service/user.service';
 import { UserRepository } from '../../repository/user.repository';
+import { requireAuth } from '../middleware';
 
 /**
  * INYECCIÓN DE DEPENDENCIAS
@@ -42,6 +52,7 @@ const userService = new UserService(UserRepository as any);
 interface UserRoute {
   method: 'get' | 'post' | 'put' | 'delete';
   requiresPathParams: boolean;
+  requiresAuth?: boolean;
   handler: (req: Request, res: Response) => Promise<void>;
   description: string;
 }
@@ -49,38 +60,54 @@ interface UserRoute {
 /**
  * Handlers individuales
  * 
- * NOTA: Los handlers no retornan void, retornan Promise<void>
- * Aunque internamente llaman a response.json(), Express lo maneja.
+ * ✅ REFACTORIZACIÓN FASE 4:
+ * - Usar parseAndValidateQueryParams() / parseAndValidateBody()
+ * - Usar formatUser() para respuestas
+ * - Usar buildSuccessResponse() para formato consistente
+ * - Logger estructurado en cada operación
  */
 const handlers: Record<string, (req: Request, res: Response) => Promise<void>> = {
   /**
    * GET /users - Listar todos
    * 
-   * ✅ AHORA: Usa UserService con UserRepository real
-   * ✅ Acceso a DB real, no mocks
+   * ✅ REFACTORIZADO:
+   * - Usar parseAndValidateQueryParams() centralizado
+   * - formatUsers() para formatear array
    */
   listUsers: async (req: Request, res: Response) => {
     try {
-      // Validar query parameters
-      const pagination = PaginationDTO.safeParse(req.query);
-      if (!pagination.success) {
-        const errors = extractZodErrors(pagination.error);
-        validationErrorResponse(res, errors);
+      // ✅ Validar query parameters de forma centralizada
+      const result = parseAndValidateQueryParams(req, PaginationDTO);
+      if (!result.success) {
+        res.status(result.error!.statusCode).json(result.error!.body);
         return;
       }
 
-      const { page, pageSize } = pagination.data;
+      const { page, pageSize } = result.data;
 
-      // ✅ CAMBIO: Llamar a UserService (que usa UserRepository con BD real)
-      const result = await userService.listUsers(page, pageSize);
+      logger.info('Listing users', { page, pageSize, requestId: req.id });
 
-      successResponse(res, {
-        users: result.users,
-        total: result.total,
-        page,
-        pageSize
-      }, 'Users retrieved successfully', 200);
+      // ✅ Obtener usuarios del servicio
+      const dbResult = await userService.listUsers(page as number, pageSize as number);
+
+      // ✅ Formatear usuarios con helpers centralizados
+      const formatted = buildSuccessResponse(
+        {
+          users: formatUsers(dbResult.users),
+          total: dbResult.total,
+          page,
+          pageSize
+        },
+        'Users retrieved successfully',
+        200
+      );
+
+      res.status(formatted.statusCode as number).json(formatted.body);
     } catch (error: any) {
+      logger.error('Error listing users', {
+        requestId: req.id,
+        error: error instanceof Error ? error.message : String(error)
+      });
       internalServerErrorResponse(res, error);
     }
   },
@@ -90,19 +117,22 @@ const handlers: Record<string, (req: Request, res: Response) => Promise<void>> =
    * 
    * ⚠️ NOTA: Requiere #8 (Password Hashing) para usar UserService.createUser
    * Por ahora, validar estructura pero no crear en DB
+   * 
+   * ✅ REFACTORIZADO:
+   * - Usar parseAndValidateBody() centralizado
    */
   createUser: async (req: Request, res: Response) => {
     try {
-      // Validar body
-      const validation = CreateUserDTO.safeParse(req.body);
-      if (!validation.success) {
-        const errors = extractZodErrors(validation.error);
-        validationErrorResponse(res, errors);
+      // ✅ Validar body de forma centralizada
+      const result = parseAndValidateBody(req, CreateUserDTO);
+      if (!result.success) {
+        res.status(result.error!.statusCode).json(result.error!.body);
         return;
       }
 
-      const userData = validation.data;
-      logger.info('Creating user', { email: userData.email });
+      const userData = result.data;
+
+      logger.info('Creating user', { email: userData.email, requestId: req.id });
 
       // ⚠️ BLOQUEADO: Necesita bcrypt para hashear password
       // TODO #8: Implementar password hashing con bcrypt
@@ -112,13 +142,23 @@ const handlers: Record<string, (req: Request, res: Response) => Promise<void>> =
       const newUser = {
         id: `${Date.now()}`,
         ...userData,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       };
 
-      successResponse(res, newUser, 'User created successfully (MOCK - needs #8)', 201);
+      const response = buildSuccessResponse(
+        newUser,
+        'User created successfully (MOCK - needs #8)',
+        201
+      );
+      res.status(response.statusCode as number).json(response.body);
     } catch (error: any) {
-      if (error.message.includes('already exists')) {
+      logger.error('Error creating user', {
+        requestId: req.id,
+        error: error instanceof Error ? error.message : String(error)
+      });
+      
+      if (error.message?.includes('already exists')) {
         conflictErrorResponse(res, error.message);
       } else {
         internalServerErrorResponse(res, error);
@@ -129,32 +169,48 @@ const handlers: Record<string, (req: Request, res: Response) => Promise<void>> =
   /**
    * GET /users/:id - Obtener por ID
    * 
-   * ✅ AHORA: Usa UserService con UserRepository real
-   * ✅ Acceso a DB real, no mocks
+   * ✅ REFACTORIZADO:
+   * - Validar path param con lógica centralizada
+   * - formatUser() para respuesta
    */
   getUserById: async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       
       if (!id) {
-        validationErrorResponse(res, [
-          { field: 'id', message: 'User ID is required', code: 'VALIDATION_ERROR' }
-        ]);
+        logger.warn('Missing user ID in path', { requestId: req.id });
+        res.status(400).json({
+          success: false,
+          message: 'Validation failed',
+          data: { errors: [{ field: 'id', message: 'User ID is required', code: 'VALIDATION_ERROR' }] },
+          timestamp: new Date().toISOString()
+        });
         return;
       }
 
-      logger.info('Fetching user', { userId: id });
+      logger.info('Fetching user', { userId: id, requestId: req.id });
 
-      // ✅ CAMBIO: Usar UserService para obtener de BD real
+      // ✅ Obtener usuario del servicio
       const user = await userService.getUserById(id);
 
       if (!user) {
+        logger.warn('User not found', { userId: id, requestId: req.id });
         notFoundErrorResponse(res, 'User not found');
         return;
       }
 
-      successResponse(res, user, 'User retrieved successfully', 200);
+      // ✅ Formatear usuario
+      const formatted = buildSuccessResponse(
+        formatUser(user),
+        'User retrieved successfully',
+        200
+      );
+      res.status(formatted.statusCode as number).json(formatted.body);
     } catch (error: any) {
+      logger.error('Error fetching user', {
+        requestId: req.id,
+        error: error instanceof Error ? error.message : String(error)
+      });
       internalServerErrorResponse(res, error);
     }
   },
@@ -162,41 +218,56 @@ const handlers: Record<string, (req: Request, res: Response) => Promise<void>> =
   /**
    * PUT /users/:id - Actualizar
    * 
-   * ✅ AHORA: Usa UserService con UserRepository real
+   * ✅ REFACTORIZADO:
+   * - Usar parseAndValidateBody() centralizado
+   * - formatUser() para respuesta
    */
   updateUser: async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
 
       if (!id) {
-        validationErrorResponse(res, [
-          { field: 'id', message: 'User ID is required', code: 'VALIDATION_ERROR' }
-        ]);
+        logger.warn('Missing user ID in path', { requestId: req.id });
+        res.status(400).json({
+          success: false,
+          message: 'Validation failed',
+          data: { errors: [{ field: 'id', message: 'User ID is required', code: 'VALIDATION_ERROR' }] },
+          timestamp: new Date().toISOString()
+        });
         return;
       }
 
-      // Validar body
-      const validation = UpdateUserDTO.safeParse(req.body);
-      if (!validation.success) {
-        const errors = extractZodErrors(validation.error);
-        validationErrorResponse(res, errors);
+      // ✅ Validar body de forma centralizada
+      const result = parseAndValidateBody(req, UpdateUserDTO);
+      if (!result.success) {
+        res.status(result.error!.statusCode).json(result.error!.body);
         return;
       }
 
-      logger.info('Updating user', { userId: id });
+      logger.info('Updating user', { userId: id, requestId: req.id });
 
-      // ✅ CAMBIO: Usar UserService para actualizar en BD real
+      // ✅ Actualizar usuario
       try {
-        const updated = await userService.updateUser(id, validation.data);
-        successResponse(res, updated, 'User updated successfully', 200);
+        const updated = await userService.updateUser(id, result.data);
+        const response = buildSuccessResponse(
+          formatUser(updated),
+          'User updated successfully',
+          200
+        );
+        res.status(response.statusCode as number).json(response.body);
       } catch (error: any) {
-        if (error.message.includes('not found')) {
+        if (error.message?.includes('not found')) {
+          logger.warn('User not found for update', { userId: id, requestId: req.id });
           notFoundErrorResponse(res, error.message);
         } else {
           throw error;
         }
       }
     } catch (error: any) {
+      logger.error('Error updating user', {
+        requestId: req.id,
+        error: error instanceof Error ? error.message : String(error)
+      });
       internalServerErrorResponse(res, error);
     }
   },
@@ -204,33 +275,49 @@ const handlers: Record<string, (req: Request, res: Response) => Promise<void>> =
   /**
    * DELETE /users/:id - Eliminar
    * 
-   * ✅ AHORA: Usa UserService con UserRepository real
+   * ✅ REFACTORIZADO:
+   * - Logger centralizado
+   * - Manejo de errores consistente
    */
   deleteUser: async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
 
       if (!id) {
-        validationErrorResponse(res, [
-          { field: 'id', message: 'User ID is required', code: 'VALIDATION_ERROR' }
-        ]);
+        logger.warn('Missing user ID in path', { requestId: req.id });
+        res.status(400).json({
+          success: false,
+          message: 'Validation failed',
+          data: { errors: [{ field: 'id', message: 'User ID is required', code: 'VALIDATION_ERROR' }] },
+          timestamp: new Date().toISOString()
+        });
         return;
       }
 
-      logger.info('Deleting user', { userId: id });
+      logger.info('Deleting user', { userId: id, requestId: req.id });
 
-      // ✅ CAMBIO: Usar UserService para eliminar de BD real
+      // ✅ Eliminar usuario
       try {
         await userService.deleteUser(id);
-        successResponseNoData(res, 'User deleted successfully', 200);
+        const response = buildSuccessResponse(
+          null,
+          'User deleted successfully',
+          200
+        );
+        res.status(response.statusCode as number).json(response.body);
       } catch (error: any) {
-        if (error.message.includes('not found')) {
+        if (error.message?.includes('not found')) {
+          logger.warn('User not found for delete', { userId: id, requestId: req.id });
           notFoundErrorResponse(res, error.message);
         } else {
           throw error;
         }
       }
     } catch (error: any) {
+      logger.error('Error deleting user', {
+        requestId: req.id,
+        error: error instanceof Error ? error.message : String(error)
+      });
       internalServerErrorResponse(res, error);
     }
   },
@@ -238,33 +325,53 @@ const handlers: Record<string, (req: Request, res: Response) => Promise<void>> =
   /**
    * GET /user/profile - Obtener perfil del usuario autenticado
    * 
-   * ✅ ENDPOINT PARA FRONTEND (COGNITO OBLIGATORIO)
-   * - Requiere JWT válido de Cognito en Authorization header
-   * - Retorna datos del usuario autenticado
-   * - Middleware cognitoAuthMiddleware extrae userId del JWT
+   * ✅ REQUIERE AUTENTICACIÓN (requireAuth middleware)
+   * ✅ REFACTORIZADO:
+   * - Usar req.user del middleware requireAuth
+   * - formatUser() para respuesta
+   * - pickFields() para no enviar datos innecesarios
    */
   getProfile: async (req: Request, res: Response) => {
     try {
-      // El middleware requireAuth debería haber populado req.user
-      const userId = req.user?.userId || (req.query.userId as string);
+      // ✅ DEFENSE IN DEPTH: requireAuth middleware ya validó JWT
+      const userId = req.user?.userId;
 
       if (!userId) {
-        validationErrorResponse(res, [
-          { field: 'authorization', message: 'Authentication required', code: 'UNAUTHORIZED' }
-        ]);
+        logger.warn('Missing user ID in profile request', { requestId: req.id });
+        res.status(401).json({
+          success: false,
+          message: 'Authentication required',
+          data: null,
+          timestamp: new Date().toISOString()
+        });
         return;
       }
 
-      logger.info('Fetching user profile', { userId });
+      logger.info('Fetching user profile', { userId, requestId: req.id });
 
-      const user = await userService.getUserById(userId as string);
+      // ✅ Obtener usuario del servicio
+      const user = await userService.getUserById(userId);
       if (!user) {
+        logger.warn('User profile not found', { userId, requestId: req.id });
         notFoundErrorResponse(res, 'User not found');
         return;
       }
 
-      successResponse(res, user, 'Profile retrieved successfully', 200);
+      // ✅ Formatear usuario y enviar solo campos necesarios
+      const formatted = formatUser(user);
+      const safeUser = pickFields(formatted, ['id', 'email', 'firstName', 'lastName', 'fullName']);
+      
+      const response = buildSuccessResponse(
+        safeUser,
+        'Profile retrieved successfully',
+        200
+      );
+      res.status(response.statusCode as number).json(response.body);
     } catch (error: any) {
+      logger.error('Error fetching profile', {
+        requestId: req.id,
+        error: error instanceof Error ? error.message : String(error)
+      });
       internalServerErrorResponse(res, error);
     }
   },
@@ -272,37 +379,56 @@ const handlers: Record<string, (req: Request, res: Response) => Promise<void>> =
   /**
    * POST /user/profile - Actualizar perfil del usuario autenticado
    * 
-   * ✅ ENDPOINT PARA FRONTEND
-   * - Requiere JWT válido de Cognito
-   * - Actualiza firstName, lastName (email no se puede cambiar normalmente)
+   * ✅ REQUIERE AUTENTICACIÓN (requireAuth middleware)
+   * ✅ REFACTORIZADO:
+   * - Usar req.user del middleware requireAuth
+   * - parseAndValidateBody() para validación
+   * - formatUser() para respuesta
    */
   updateProfile: async (req: Request, res: Response) => {
     try {
-      const userId = (req as any).userId || req.query.userId;
+      // ✅ DEFENSE IN DEPTH: requireAuth middleware ya validó JWT
+      const userId = req.user?.userId;
 
       if (!userId) {
-        validationErrorResponse(res, [
-          { field: 'authorization', message: 'Authentication required', code: 'UNAUTHORIZED' }
-        ]);
+        logger.warn('Missing user ID in profile update', { requestId: req.id });
+        res.status(401).json({
+          success: false,
+          message: 'Authentication required',
+          data: null,
+          timestamp: new Date().toISOString()
+        });
         return;
       }
 
-      // Validar body (reutilizar UpdateUserDTO)
-      const validation = UpdateUserDTO.safeParse(req.body);
-      if (!validation.success) {
-        const errors = extractZodErrors(validation.error);
-        validationErrorResponse(res, errors);
+      // ✅ Validar body de forma centralizada
+      const result = parseAndValidateBody(req, UpdateUserDTO);
+      if (!result.success) {
+        res.status(result.error!.statusCode).json(result.error!.body);
         return;
       }
 
-      logger.info('Updating user profile', { userId });
+      logger.info('Updating user profile', { userId, requestId: req.id });
 
-      const updated = await userService.updateUser(userId as string, validation.data);
-      successResponse(res, updated, 'Profile updated successfully', 200);
+      // ✅ Actualizar usuario
+      const updated = await userService.updateUser(userId, result.data);
+      
+      const formatted = formatUser(updated);
+      const response = buildSuccessResponse(
+        formatted,
+        'Profile updated successfully',
+        200
+      );
+      res.status(response.statusCode as number).json(response.body);
     } catch (error: any) {
-      if (error.message.includes('not found')) {
+      if (error.message?.includes('not found')) {
+        logger.warn('User not found in profile update', { requestId: req.id });
         notFoundErrorResponse(res, error.message);
       } else {
+        logger.error('Error updating profile', {
+          requestId: req.id,
+          error: error instanceof Error ? error.message : String(error)
+        });
         internalServerErrorResponse(res, error);
       }
     }
@@ -312,10 +438,14 @@ const handlers: Record<string, (req: Request, res: Response) => Promise<void>> =
 /**
  * Route Map - Configuración declarativa de rutas
  * 
+ * ✅ REFACTORIZADO FASE 4:
+ * - Agregado requiresAuth flag para rutas protegidas
+ * - Middleware requireAuth aplicado en registerUserRoutes()
+ * 
  * Ventajas:
  * ✅ Agregar ruta = agregar línea, no modificar lógica
  * ✅ Todas las rutas visibles en un solo lugar
- * ✅ Autodocumentado con descripción
+ * ✅ Autodocumentado con descripción y requiresAuth
  * ✅ Fácil de testear
  * ✅ Escalable a 100+ rutas sin complejidad
  */
@@ -323,30 +453,35 @@ export const userRouteMap: UserRoute[] = [
   {
     method: 'get',
     requiresPathParams: false,
+    requiresAuth: false,
     handler: handlers.listUsers,
     description: 'GET /users - List all users'
   },
   {
     method: 'post',
     requiresPathParams: false,
+    requiresAuth: false,
     handler: handlers.createUser,
     description: 'POST /users - Create new user'
   },
   {
     method: 'get',
     requiresPathParams: true,
+    requiresAuth: false,
     handler: handlers.getUserById,
     description: 'GET /users/:id - Get user by ID'
   },
   {
     method: 'put',
     requiresPathParams: true,
+    requiresAuth: false,
     handler: handlers.updateUser,
     description: 'PUT /users/:id - Update user'
   },
   {
     method: 'delete',
     requiresPathParams: true,
+    requiresAuth: false,
     handler: handlers.deleteUser,
     description: 'DELETE /users/:id - Delete user'
   }
@@ -354,9 +489,13 @@ export const userRouteMap: UserRoute[] = [
 
 /**
  * Registrar rutas en Express
+ * 
+ * ✅ REFACTORIZADO FASE 4:
+ * - Rutas autenticadas usan requireAuth middleware
+ * - /user/profile es PROTEGIDA (requiere JWT)
  */
 export const registerUserRoutes = (app: any) => {
-  // Rutas CRUD estándar
+  // Rutas CRUD estándar (sin autenticación)
   userRouteMap.forEach(route => {
     if (route.method === 'get' && !route.requiresPathParams) {
       app.get('/users', route.handler);
@@ -371,9 +510,10 @@ export const registerUserRoutes = (app: any) => {
     }
   });
 
-  // Rutas especiales para perfil del usuario autenticado (FRONTEND)
-  app.get('/user/profile', handlers.getProfile);
-  app.post('/user/profile', handlers.updateProfile);
+  // ✅ Rutas especiales para perfil del usuario autenticado (FRONTEND)
+  // REQUIEREN JWT válido de Cognito
+  app.get('/user/profile', requireAuth, handlers.getProfile);
+  app.post('/user/profile', requireAuth, handlers.updateProfile);
 };
 
 /**
@@ -381,7 +521,11 @@ export const registerUserRoutes = (app: any) => {
  */
 export const logAvailableRoutes = () => {
   logger.info('📋 Available User Routes:', {
-    routes: userRouteMap.map(r => r.description)
+    routes: userRouteMap.map(r => `${r.description}${r.requiresAuth ? ' [PROTECTED]' : ''}`),
+    protected: [
+      'GET /user/profile [PROTECTED]',
+      'POST /user/profile [PROTECTED]'
+    ]
   });
 };
 
