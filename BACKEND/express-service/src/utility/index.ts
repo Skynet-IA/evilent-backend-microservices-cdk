@@ -15,6 +15,10 @@ export { default as logger } from './logger';
 export { validateWithZod, parseWithZod, safeParseWithZod, formatZodErrors } from './zod-validator';
 export { type ValidationError, type ZodValidationResult } from './zod-validator';
 
+export { parseAndValidateBody, parseAndValidatePathParams, parseAndValidateQueryParams } from './request-parser';
+export { validationSuccessResponse } from './request-parser';
+export { type ValidationErrorResponse, type ParseResult } from './request-parser';
+
 export { AppError, ValidationError as AppValidationError, NotFoundError } from './errors';
 
 export { requestIdMiddleware, getRequestId } from '../api/middleware';
